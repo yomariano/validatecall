@@ -1,0 +1,478 @@
+// API Client for Backend Server
+// This replaces direct API calls to Supabase, Apify, and Vapi
+
+import { createClient } from '@supabase/supabase-js';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+
+// Initialize Supabase client for auth token retrieval
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = supabaseUrl && supabaseAnonKey
+    ? createClient(supabaseUrl, supabaseAnonKey)
+    : null;
+
+// Get the current user's auth token
+const getAuthToken = async () => {
+    if (!supabase) return null;
+
+    // Check if we're on localhost (bypass auth)
+    const isLocalhost = window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1';
+    if (isLocalhost) {
+        // Return null for localhost - backend should handle mock user
+        return null;
+    }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || null;
+};
+
+// Helper function for API requests
+const apiRequest = async (endpoint, options = {}) => {
+    const url = `${API_BASE_URL}${endpoint}`;
+
+    // Get auth token
+    const token = await getAuthToken();
+
+    const config = {
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            ...options.headers,
+        },
+        ...options,
+    };
+
+    const response = await fetch(url, config);
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(error.error || error.message || 'Request failed');
+    }
+
+    return response.json();
+};
+
+// =============================================
+// HEALTH CHECK
+// =============================================
+
+export const getHealth = () => apiRequest('/health');
+
+// =============================================
+// LEAD GENERATION - Claude Sonnet AI
+// =============================================
+
+export const apify = {
+    getStatus: () => apiRequest('/api/apify/status'),
+
+    scrape: ({ keyword, location, maxResults }) =>
+        apiRequest('/api/apify/scrape', {
+            method: 'POST',
+            body: JSON.stringify({ keyword, location, maxResults }),
+        }),
+
+    getRunStatus: (runId) => apiRequest(`/api/apify/runs/${runId}`),
+
+    getRunResults: (runId) => apiRequest(`/api/apify/runs/${runId}/results`),
+
+    getRecentRuns: (limit = 10) => apiRequest(`/api/apify/runs?limit=${limit}`),
+
+    // Convenience method: generate leads and wait for results
+    scrapeAndWait: async ({ keyword, location, maxResults = 100 }, onStatusUpdate) => {
+        // Start the run
+        const run = await apify.scrape({ keyword, location, maxResults });
+        const runId = run.data.id;
+
+        if (onStatusUpdate) {
+            onStatusUpdate({ status: 'RUNNING', message: 'Scraping started...' });
+        }
+
+        // Poll for completion
+        let status = 'RUNNING';
+        while (status === 'RUNNING' || status === 'READY') {
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            const runData = await apify.getRunStatus(runId);
+            status = runData.data.status;
+
+            if (onStatusUpdate) {
+                onStatusUpdate({
+                    status,
+                    message: `Status: ${status}`,
+                    stats: runData.data.stats,
+                });
+            }
+        }
+
+        if (status !== 'SUCCEEDED') {
+            throw new Error(`Scraping failed with status: ${status}`);
+        }
+
+        // Get results
+        return apify.getRunResults(runId);
+    },
+};
+
+export const isApifyConfigured = async () => {
+    try {
+        const status = await apify.getStatus();
+        return status.configured;
+    } catch {
+        return false;
+    }
+};
+
+// =============================================
+// SUPABASE - Database Operations
+// =============================================
+
+export const supabaseApi = {
+    getStatus: () => apiRequest('/api/supabase/status'),
+
+    // Leads
+    getLeads: (filters = {}) => {
+        const params = new URLSearchParams();
+        if (filters.status) params.append('status', filters.status);
+        if (filters.hasPhone) params.append('hasPhone', 'true');
+        if (filters.keyword) params.append('keyword', filters.keyword);
+        if (filters.limit) params.append('limit', filters.limit);
+        const query = params.toString();
+        return apiRequest(`/api/supabase/leads${query ? `?${query}` : ''}`);
+    },
+
+    getLeadById: (id) => apiRequest(`/api/supabase/leads/${id}`),
+
+    saveLeads: (leads, searchKeyword, searchLocation) =>
+        apiRequest('/api/supabase/leads', {
+            method: 'POST',
+            body: JSON.stringify({ leads, searchKeyword, searchLocation }),
+        }),
+
+    updateLeadStatus: (id, status) =>
+        apiRequest(`/api/supabase/leads/${id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
+        }),
+
+    updateLeadAfterCall: (id) =>
+        apiRequest(`/api/supabase/leads/${id}/after-call`, {
+            method: 'PATCH',
+        }),
+
+    updateLeadIndustries: (updates) =>
+        apiRequest('/api/supabase/leads/industries', {
+            method: 'PATCH',
+            body: JSON.stringify({ updates }),
+        }),
+
+    getLeadsStats: () => apiRequest('/api/supabase/stats/leads'),
+
+    // Campaigns
+    getCampaigns: () => apiRequest('/api/supabase/campaigns'),
+
+    createCampaign: (campaign) =>
+        apiRequest('/api/supabase/campaigns', {
+            method: 'POST',
+            body: JSON.stringify(campaign),
+        }),
+
+    updateCampaignStats: (id, stats) =>
+        apiRequest(`/api/supabase/campaigns/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(stats),
+        }),
+
+    // Calls
+    getCalls: (filters = {}) => {
+        const params = new URLSearchParams();
+        if (filters.campaignId) params.append('campaignId', filters.campaignId);
+        if (filters.limit) params.append('limit', filters.limit);
+        const query = params.toString();
+        return apiRequest(`/api/supabase/calls${query ? `?${query}` : ''}`);
+    },
+
+    saveCall: (callData) =>
+        apiRequest('/api/supabase/calls', {
+            method: 'POST',
+            body: JSON.stringify(callData),
+        }),
+
+    updateCall: (id, updates) =>
+        apiRequest(`/api/supabase/calls/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(updates),
+        }),
+
+    getCallsStats: () => apiRequest('/api/supabase/stats/calls'),
+
+    // Scrape Jobs
+    getScrapeJobs: (limit = 20) => apiRequest(`/api/supabase/scrape-jobs?limit=${limit}`),
+
+    saveScrapeJob: (job) =>
+        apiRequest('/api/supabase/scrape-jobs', {
+            method: 'POST',
+            body: JSON.stringify(job),
+        }),
+
+    updateScrapeJob: (id, updates) =>
+        apiRequest(`/api/supabase/scrape-jobs/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(updates),
+        }),
+
+    // Dashboard
+    getDashboardStats: () => apiRequest('/api/supabase/dashboard'),
+};
+
+export const isSupabaseConfigured = async () => {
+    try {
+        const status = await supabaseApi.getStatus();
+        return status.configured;
+    } catch {
+        return false;
+    }
+};
+
+// =============================================
+// VAPI - Voice AI Calls
+// =============================================
+
+export const vapiApi = {
+    getStatus: () => apiRequest('/api/vapi/status'),
+
+    initiateCall: ({ phoneNumber, customerName, productIdea, companyContext, assistant, assistantId }) =>
+        apiRequest('/api/vapi/call', {
+            method: 'POST',
+            body: JSON.stringify({ phoneNumber, customerName, productIdea, companyContext, assistant, assistantId }),
+        }),
+
+    batchInitiateCalls: ({ phoneNumbers, productIdea, companyContext, delayMs }) =>
+        apiRequest('/api/vapi/calls/batch', {
+            method: 'POST',
+            body: JSON.stringify({ phoneNumbers, productIdea, companyContext, delayMs }),
+        }),
+
+    getCallStatus: (callId) => apiRequest(`/api/vapi/calls/${callId}`),
+
+    getAllCalls: (limit = 100) => apiRequest(`/api/vapi/calls?limit=${limit}`),
+
+    // Get all assistants with their full configuration (voice, provider, etc.)
+    getAssistants: (limit = 100) => apiRequest(`/api/vapi/assistants?limit=${limit}`),
+
+    // Get a single assistant by ID
+    getAssistant: (assistantId) => apiRequest(`/api/vapi/assistants/${assistantId}`),
+
+    // Create a new assistant
+    createAssistant: (config) =>
+        apiRequest('/api/vapi/assistants', {
+            method: 'POST',
+            body: JSON.stringify(config),
+        }),
+
+    // Update an assistant
+    updateAssistant: (assistantId, updates) =>
+        apiRequest(`/api/vapi/assistants/${assistantId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(updates),
+        }),
+
+    // Delete an assistant
+    deleteAssistant: (assistantId) =>
+        apiRequest(`/api/vapi/assistants/${assistantId}`, {
+            method: 'DELETE',
+        }),
+
+    // Get available voices
+    getVoices: () => apiRequest('/api/vapi/voices'),
+
+    // Get public key for web SDK (real-time voice testing)
+    getPublicKey: () => apiRequest('/api/vapi/public-key'),
+
+    parsePhoneNumbers: (input) =>
+        apiRequest('/api/vapi/parse-phones', {
+            method: 'POST',
+            body: JSON.stringify({ input }),
+        }),
+
+    // Multi-tenant endpoints (per-user phone numbers)
+    getUserPhoneStats: (userId) => apiRequest(`/api/vapi/user/${userId}/phone-stats`),
+
+    getUserPhoneNumbers: (userId) => apiRequest(`/api/vapi/user/${userId}/phone-numbers`),
+
+    initiateUserCall: (userId, { phoneNumber, customerName, productIdea, companyContext, assistant, assistantId }) =>
+        apiRequest(`/api/vapi/user/${userId}/call`, {
+            method: 'POST',
+            body: JSON.stringify({ phoneNumber, customerName, productIdea, companyContext, assistant, assistantId }),
+        }),
+
+    batchInitiateUserCalls: (userId, { phoneNumbers, productIdea, companyContext, delayMs }) =>
+        apiRequest(`/api/vapi/user/${userId}/calls/batch`, {
+            method: 'POST',
+            body: JSON.stringify({ phoneNumbers, productIdea, companyContext, delayMs }),
+        }),
+};
+
+// =============================================
+// STRIPE - Payments & Subscriptions
+// =============================================
+
+export const stripeApi = {
+    getStatus: () => apiRequest('/api/stripe/status'),
+
+    getPlans: () => apiRequest('/api/stripe/plans'),
+
+    getSubscription: (userId) => apiRequest(`/api/stripe/subscription/${userId}`),
+
+    getPaymentLink: (planId, userId) => apiRequest(`/api/stripe/payment-link/${planId}/${userId}`),
+
+    // Manual provisioning (admin only)
+    provisionPhones: (userId, planId, countryCode = 'IE') =>
+        apiRequest(`/api/stripe/provision/${userId}`, {
+            method: 'POST',
+            body: JSON.stringify({ planId, countryCode }),
+        }),
+};
+
+// =============================================
+// SCHEDULED CALLS - Call Scheduling
+// =============================================
+
+export const scheduledApi = {
+    // Schedule a single call
+    scheduleCall: ({ userId, leadId, phoneNumber, customerName, scheduledAt, productIdea, companyContext, assistantId, maxRetries }) =>
+        apiRequest('/api/scheduled/calls', {
+            method: 'POST',
+            body: JSON.stringify({
+                userId,
+                leadId,
+                phoneNumber,
+                customerName,
+                scheduledAt,
+                productIdea,
+                companyContext,
+                assistantId,
+                maxRetries,
+            }),
+        }),
+
+    // Get scheduled calls for a user
+    getScheduledCalls: (userId, filters = {}) => {
+        const params = new URLSearchParams({ userId });
+        if (filters.status) params.append('status', filters.status);
+        if (filters.limit) params.append('limit', filters.limit);
+        return apiRequest(`/api/scheduled/calls?${params}`);
+    },
+
+    // Get a specific scheduled call
+    getScheduledCall: (id) => apiRequest(`/api/scheduled/calls/${id}`),
+
+    // Update/reschedule a call
+    updateScheduledCall: (id, updates) =>
+        apiRequest(`/api/scheduled/calls/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(updates),
+        }),
+
+    // Cancel a scheduled call
+    cancelScheduledCall: (id) =>
+        apiRequest(`/api/scheduled/calls/${id}`, {
+            method: 'DELETE',
+        }),
+
+    // Get scheduling stats
+    getStats: (userId) => apiRequest(`/api/scheduled/stats?userId=${userId}`),
+
+    // Bulk schedule calls
+    bulkScheduleCalls: ({ userId, campaignId, calls, scheduledAt, productIdea, companyContext, assistantId, maxRetries, delayBetweenCallsMs }) =>
+        apiRequest('/api/scheduled/calls/bulk', {
+            method: 'POST',
+            body: JSON.stringify({
+                userId,
+                campaignId,
+                calls,
+                scheduledAt,
+                productIdea,
+                companyContext,
+                assistantId,
+                maxRetries,
+                delayBetweenCallsMs,
+            }),
+        }),
+};
+
+export const isVapiConfigured = async () => {
+    try {
+        const status = await vapiApi.getStatus();
+        return status.configured;
+    } catch {
+        return false;
+    }
+};
+
+// =============================================
+// CLAUDE - AI Text Generation
+// =============================================
+
+export const claudeApi = {
+    getStatus: () => apiRequest('/api/claude/status'),
+
+    // Generate improved text for product pitch or company context
+    generate: (input, type = 'product') =>
+        apiRequest('/api/claude/generate', {
+            method: 'POST',
+            body: JSON.stringify({ input, type }),
+        }),
+
+    // Classify leads by industry using AI
+    classifyIndustry: (leads) =>
+        apiRequest('/api/claude/classify-industry', {
+            method: 'POST',
+            body: JSON.stringify({ leads }),
+        }),
+};
+
+export const isClaudeConfigured = async () => {
+    try {
+        const status = await claudeApi.getStatus();
+        return status.configured;
+    } catch {
+        return false;
+    }
+};
+
+// Format duration from seconds (utility function kept client-side)
+export const formatDuration = (seconds) => {
+    if (!seconds) return '-';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+// Format transcript messages into readable text (utility function kept client-side)
+export const formatTranscript = (messages) => {
+    if (!messages || !Array.isArray(messages)) return '';
+
+    return messages
+        .filter(m => m.role && m.message)
+        .map(m => `${m.role === 'assistant' ? 'AI' : 'Customer'}: ${m.message}`)
+        .join('\n\n');
+};
+
+// Export default API object
+export default {
+    getHealth,
+    apify,
+    supabaseApi,
+    vapiApi,
+    stripeApi,
+    scheduledApi,
+    claudeApi,
+    isApifyConfigured,
+    isSupabaseConfigured,
+    isVapiConfigured,
+    isClaudeConfigured,
+    formatDuration,
+    formatTranscript,
+};
