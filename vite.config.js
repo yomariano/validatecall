@@ -11,4 +11,17 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  preview: {
+    host: '0.0.0.0',
+    port: 4173,
+    allowedHosts: [
+      'validatecall.com',
+      '.validatecall.com', // allows all subdomains
+      'localhost',
+    ],
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+  },
 })
