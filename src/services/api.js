@@ -1,5 +1,5 @@
 // API Client for Backend Server
-// This replaces direct API calls to Supabase, Apify, and Vapi
+// This replaces direct API calls to Supabase and Vapi
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -64,60 +64,46 @@ export const getHealth = () => apiRequest('/health');
 // LEAD GENERATION - Claude Sonnet AI
 // =============================================
 
-export const apify = {
-    getStatus: () => apiRequest('/api/apify/status'),
+export const leads = {
+    getStatus: () => apiRequest('/api/claude/status'),
 
     scrape: ({ keyword, location, maxResults }) =>
-        apiRequest('/api/apify/scrape', {
+        apiRequest('/api/claude/generate-leads', {
             method: 'POST',
             body: JSON.stringify({ keyword, location, maxResults }),
         }),
 
-    getRunStatus: (runId) => apiRequest(`/api/apify/runs/${runId}`),
-
-    getRunResults: (runId) => apiRequest(`/api/apify/runs/${runId}/results`),
-
-    getRecentRuns: (limit = 10) => apiRequest(`/api/apify/runs?limit=${limit}`),
-
-    // Convenience method: generate leads and wait for results
+    // Generate leads using Claude AI - returns results directly
     scrapeAndWait: async ({ keyword, location, maxResults = 100 }, onStatusUpdate) => {
-        // Start the run
-        const run = await apify.scrape({ keyword, location, maxResults });
-        const runId = run.data.id;
-
         if (onStatusUpdate) {
-            onStatusUpdate({ status: 'RUNNING', message: 'Scraping started...' });
+            onStatusUpdate({ status: 'RUNNING', message: 'Generating leads with AI...' });
         }
 
-        // Poll for completion
-        let status = 'RUNNING';
-        while (status === 'RUNNING' || status === 'READY') {
-            await new Promise(resolve => setTimeout(resolve, 3000));
-
-            const runData = await apify.getRunStatus(runId);
-            status = runData.data.status;
+        try {
+            // Call Claude to generate leads - returns results directly
+            const response = await apiRequest('/api/claude/generate-leads', {
+                method: 'POST',
+                body: JSON.stringify({ keyword, location, maxResults }),
+            });
 
             if (onStatusUpdate) {
-                onStatusUpdate({
-                    status,
-                    message: `Status: ${status}`,
-                    stats: runData.data.stats,
-                });
+                onStatusUpdate({ status: 'SUCCEEDED', message: `Generated ${response.leads?.length || 0} leads` });
             }
-        }
 
-        if (status !== 'SUCCEEDED') {
-            throw new Error(`Scraping failed with status: ${status}`);
+            // Return the leads array directly
+            return response.leads || [];
+        } catch (error) {
+            if (onStatusUpdate) {
+                onStatusUpdate({ status: 'FAILED', message: error.message });
+            }
+            throw error;
         }
-
-        // Get results
-        return apify.getRunResults(runId);
     },
 };
 
-export const isApifyConfigured = async () => {
+export const isLeadsConfigured = async () => {
     try {
-        const status = await apify.getStatus();
+        const status = await leads.getStatus();
         return status.configured;
     } catch {
         return false;
@@ -431,6 +417,13 @@ export const claudeApi = {
             method: 'POST',
             body: JSON.stringify({ leads }),
         }),
+
+    // Generate leads using Claude AI
+    generateLeads: ({ keyword, location, maxResults = 100 }) =>
+        apiRequest('/api/claude/generate-leads', {
+            method: 'POST',
+            body: JSON.stringify({ keyword, location, maxResults }),
+        }),
 };
 
 export const isClaudeConfigured = async () => {
@@ -463,13 +456,13 @@ export const formatTranscript = (messages) => {
 // Export default API object
 export default {
     getHealth,
-    apify,
+    leads,
     supabaseApi,
     vapiApi,
     stripeApi,
     scheduledApi,
     claudeApi,
-    isApifyConfigured,
+    isLeadsConfigured,
     isSupabaseConfigured,
     isVapiConfigured,
     isClaudeConfigured,

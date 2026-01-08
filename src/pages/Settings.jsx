@@ -7,7 +7,7 @@ import {
   XCircle,
   Zap,
   Database,
-  MapPinned,
+  Bot,
   ExternalLink,
   Loader2,
   Server
@@ -24,7 +24,7 @@ function Settings() {
     backend: { configured: false, status: 'Checking...' },
     vapi: { configured: false, status: 'Checking...' },
     supabase: { configured: false, status: 'Checking...' },
-    apify: { configured: false, status: 'Checking...' },
+    claude: { configured: false, status: 'Checking...' },
   });
 
   useEffect(() => {
@@ -44,9 +44,9 @@ function Settings() {
           configured: health.services?.supabase || false,
           status: health.services?.supabase ? 'Connected' : 'Not configured',
         },
-        apify: {
-          configured: health.services?.apify || false,
-          status: health.services?.apify ? 'Configured' : 'Not configured',
+        claude: {
+          configured: health.services?.claude || false,
+          status: health.services?.claude ? 'Configured' : 'Not configured',
         },
       });
     } catch {
@@ -54,7 +54,7 @@ function Settings() {
         backend: { configured: false, status: 'Not running' },
         vapi: { configured: false, status: 'Backend required' },
         supabase: { configured: false, status: 'Backend required' },
-        apify: { configured: false, status: 'Backend required' },
+        claude: { configured: false, status: 'Backend required' },
       });
     }
   };
@@ -171,10 +171,10 @@ function Settings() {
               </div>
             </div>
 
-            {/* Apify */}
+            {/* Claude AI */}
             <div className={cn(
               "relative group rounded-xl border-2 p-6 transition-all duration-300",
-              configStatus.apify.configured
+              configStatus.claude.configured
                 ? "border-success/30 hover:border-success/60 hover:shadow-glow-success"
                 : "border-destructive/30 hover:border-destructive/50"
             )}>
@@ -182,16 +182,16 @@ function Settings() {
               <div className="relative flex flex-col items-center text-center">
                 <div className={cn(
                   "mb-4 flex h-14 w-14 items-center justify-center rounded-full",
-                  configStatus.apify.configured ? "bg-success/10" : "bg-destructive/10"
+                  configStatus.claude.configured ? "bg-success/10" : "bg-destructive/10"
                 )}>
-                  <MapPinned className={cn(
+                  <Bot className={cn(
                     "h-7 w-7",
-                    configStatus.apify.configured ? "text-success" : "text-destructive"
+                    configStatus.claude.configured ? "text-success" : "text-destructive"
                   )} />
                 </div>
-                <h3 className="text-lg font-semibold mb-1">Apify</h3>
-                <p className="text-sm text-muted-foreground mb-3">Google Maps Scraping</p>
-                <StatusIcon configured={configStatus.apify.configured} />
+                <h3 className="text-lg font-semibold mb-1">Claude AI</h3>
+                <p className="text-sm text-muted-foreground mb-3">Lead Generation</p>
+                <StatusIcon configured={configStatus.claude.configured} />
               </div>
             </div>
           </div>
@@ -235,13 +235,19 @@ function Settings() {
               </div>
             </div>
 
-            {/* Apify */}
+            {/* Claude AI */}
             <div className="mb-4">
-              <div className="text-muted-foreground"># Apify - Google Maps Scraping</div>
+              <div className="text-muted-foreground"># Claude AI - Lead Generation</div>
               <div className="mt-1">
-                <span className="text-[#c084fc]">APIFY_TOKEN</span>=
-                <span className={configStatus.apify.configured ? 'text-success' : 'text-destructive'}>
-                  {configStatus.apify.configured ? '••••••••' : 'your_apify_token'}
+                <span className="text-[#c084fc]">CLAUDE_API_URL</span>=
+                <span className={configStatus.claude.configured ? 'text-success' : 'text-destructive'}>
+                  {configStatus.claude.configured ? '••••••••' : 'your_claude_api_url'}
+                </span>
+              </div>
+              <div>
+                <span className="text-[#c084fc]">CLAUDE_API_KEY</span>=
+                <span className={configStatus.claude.configured ? 'text-success' : 'text-destructive'}>
+                  {configStatus.claude.configured ? '••••••••' : 'your_claude_api_key'}
                 </span>
               </div>
             </div>
@@ -359,17 +365,17 @@ function Settings() {
             </ol>
           </div>
 
-          {/* Apify */}
+          {/* Claude AI */}
           <div>
             <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">3</span>
-              Apify
-              <span className="text-xs font-normal text-muted-foreground">(Required for scraping)</span>
+              Claude AI
+              <span className="text-xs font-normal text-muted-foreground">(Required for lead generation)</span>
             </h3>
             <ol className="list-decimal ml-10 space-y-1.5 text-sm text-muted-foreground">
-              <li>Sign up at <a href="https://apify.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">apify.com <ExternalLink className="h-3 w-3" /></a></li>
-              <li>Get your API token from Settings → Integrations</li>
-              <li>You get $5 free credit monthly</li>
+              <li>Set up your Claude API proxy server</li>
+              <li>Configure CLAUDE_API_URL and CLAUDE_API_KEY in the backend .env file</li>
+              <li>The API should expose a /prompt endpoint for text generation</li>
             </ol>
           </div>
         </CardContent>

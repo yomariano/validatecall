@@ -72,15 +72,15 @@ function Dashboard() {
     }
   };
 
-  const [configStatus, setConfigStatus] = useState({ vapi: false, supabase: false, apify: false });
+  const [configStatus, setConfigStatus] = useState({ vapi: false, supabase: false, claude: false });
   const [allConfigured, setAllConfigured] = useState(false);
 
   useEffect(() => {
     const checkServices = async () => {
       try {
         const health = await getHealth();
-        setConfigStatus(health.services || { vapi: false, supabase: false, apify: false });
-        setAllConfigured(health.services?.vapi && health.services?.supabase && health.services?.apify);
+        setConfigStatus(health.services || { vapi: false, supabase: false, claude: false });
+        setAllConfigured(health.services?.vapi && health.services?.supabase && health.services?.claude);
       } catch {
         // Backend not available
       }
@@ -150,9 +150,9 @@ function Dashboard() {
                 {configStatus.supabase ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Clock className="h-4 w-4" />}
                 <span className="text-sm">Supabase Database</span>
               </div>
-              <div className={`flex items-center gap-2 ${configStatus.apify ? 'text-muted-foreground' : ''}`}>
-                {configStatus.apify ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Clock className="h-4 w-4" />}
-                <span className="text-sm">Apify Scraping</span>
+              <div className={`flex items-center gap-2 ${configStatus.claude ? 'text-muted-foreground' : ''}`}>
+                {configStatus.claude ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Clock className="h-4 w-4" />}
+                <span className="text-sm">Claude AI (Lead Gen)</span>
               </div>
             </div>
           </AlertDescription>
