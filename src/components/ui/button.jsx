@@ -24,6 +24,8 @@ const buttonVariants = cva(
                     'bg-warning shadow-md hover:bg-warning/90 hover:shadow-glow-warning',
                 gradient:
                     'bg-gradient-to-r from-gradient-start via-gradient-mid to-gradient-end shadow-md hover:opacity-90 hover:shadow-glow',
+                hero: 'bg-gradient-to-r from-primary to-accent text-white font-bold shadow-[0_10px_30px_-10px_hsl(199_89%_48%_/_0.5)] hover:shadow-[0_15px_40px_-10px_hsl(199_89%_48%_/_0.7)] hover:scale-105 hover:brightness-110',
+                heroOutline: 'border-2 border-primary/50 bg-transparent text-foreground hover:bg-primary/10 hover:border-primary hover:scale-105',
             },
             size: {
                 default: 'h-10 px-5 py-2',
