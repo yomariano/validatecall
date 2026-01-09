@@ -21,7 +21,9 @@ import {
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
+import { useUsage } from '@/context/UsageContext';
 import { useOnboarding } from './OnboardingWizard';
+import { UsageDisplay } from '@/components/UsageMeter';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -35,6 +37,7 @@ const navItems = [
 
 function Sidebar({ onShowWizard }) {
   const { user, isLocalhost, signOut } = useAuth();
+  const { isFreeTier, leadsUsed, leadsLimit, callsUsed, callsLimit } = useUsage();
   const { currentUserStep, hasCompletedOnboarding } = useOnboarding();
 
   const handleSignOut = async () => {
@@ -82,6 +85,18 @@ function Sidebar({ onShowWizard }) {
               <span className="text-xs text-muted-foreground">2-step setup guide</span>
             </div>
           </button>
+        </div>
+      )}
+
+      {/* Free Tier Usage Display */}
+      {isFreeTier && (
+        <div className="mx-4 mt-4">
+          <UsageDisplay
+            leadsUsed={leadsUsed}
+            leadsLimit={leadsLimit}
+            callsUsed={callsUsed}
+            callsLimit={callsLimit}
+          />
         </div>
       )}
 

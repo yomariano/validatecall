@@ -74,7 +74,7 @@ export const leads = {
         }),
 
     // Generate leads using Claude AI - returns results directly
-    scrapeAndWait: async ({ keyword, location, maxResults = 100 }, onStatusUpdate) => {
+    scrapeAndWait: async ({ keyword, location, maxResults = 100, userId }, onStatusUpdate) => {
         if (onStatusUpdate) {
             onStatusUpdate({ status: 'RUNNING', message: 'Generating leads with AI...' });
         }
@@ -83,7 +83,7 @@ export const leads = {
             // Call Claude to generate leads - returns results directly
             const response = await apiRequest('/api/claude/generate-leads', {
                 method: 'POST',
-                body: JSON.stringify({ keyword, location, maxResults }),
+                body: JSON.stringify({ keyword, location, maxResults, userId }),
             });
 
             if (onStatusUpdate) {
@@ -419,10 +419,10 @@ export const claudeApi = {
         }),
 
     // Generate leads using Claude AI
-    generateLeads: ({ keyword, location, maxResults = 100 }) =>
+    generateLeads: ({ keyword, location, maxResults = 100, userId }) =>
         apiRequest('/api/claude/generate-leads', {
             method: 'POST',
-            body: JSON.stringify({ keyword, location, maxResults }),
+            body: JSON.stringify({ keyword, location, maxResults, userId }),
         }),
 };
 
@@ -453,6 +453,35 @@ export const formatTranscript = (messages) => {
         .join('\n\n');
 };
 
+// =============================================
+// USAGE - Free Tier Tracking
+// =============================================
+
+export const usageApi = {
+    // Get user's usage stats
+    getUsage: (userId) => apiRequest(`/api/usage/${userId}`),
+
+    // Check if user can generate leads
+    canGenerateLeads: (userId, count = 1) =>
+        apiRequest(`/api/usage/${userId}/can-generate-leads?count=${count}`),
+
+    // Check if user can make a call
+    canMakeCall: (userId) => apiRequest(`/api/usage/${userId}/can-make-call`),
+
+    // Increment leads used (called after successful generation)
+    incrementLeads: (userId, count = 1) =>
+        apiRequest(`/api/usage/${userId}/increment-leads`, {
+            method: 'POST',
+            body: JSON.stringify({ count }),
+        }),
+
+    // Increment calls used (called after successful call)
+    incrementCalls: (userId) =>
+        apiRequest(`/api/usage/${userId}/increment-calls`, {
+            method: 'POST',
+        }),
+};
+
 // Export default API object
 export default {
     getHealth,
@@ -462,6 +491,7 @@ export default {
     stripeApi,
     scheduledApi,
     claudeApi,
+    usageApi,
     isLeadsConfigured,
     isSupabaseConfigured,
     isVapiConfigured,
