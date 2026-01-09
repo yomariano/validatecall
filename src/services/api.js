@@ -313,6 +313,13 @@ export const stripeApi = {
 
     getPaymentLink: (planId, userId) => apiRequest(`/api/stripe/payment-link/${planId}/${userId}`),
 
+    // Create Stripe Customer Portal session for managing subscription
+    createPortalSession: (returnUrl) =>
+        apiRequest('/api/billing/portal', {
+            method: 'POST',
+            body: JSON.stringify({ returnUrl }),
+        }),
+
     // Manual provisioning (admin only)
     provisionPhones: (userId, planId, countryCode = 'IE') =>
         apiRequest(`/api/stripe/provision/${userId}`, {
