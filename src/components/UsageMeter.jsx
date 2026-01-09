@@ -13,7 +13,6 @@ function UsageMeter({
     className
 }) {
     const percentage = Math.min(100, (used / limit) * 100);
-    const remaining = Math.max(0, limit - used);
 
     // Determine color based on percentage
     const getColor = () => {
@@ -40,7 +39,7 @@ function UsageMeter({
                 <div className="flex justify-between items-center text-xs">
                     <span className="text-muted-foreground">{label}</span>
                     <span className={cn('font-medium', getTextColor())}>
-                        {remaining}/{limit}
+                        {used}/{limit}
                     </span>
                 </div>
             )}

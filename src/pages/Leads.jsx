@@ -197,6 +197,9 @@ function Leads() {
   const [isScheduleMode, setIsScheduleMode] = useState(false);
   const [scheduledDateTime, setScheduledDateTime] = useState('');
 
+  // Debounce ref to prevent rapid double-clicks on search
+  const scrapeInProgressRef = useRef(false);
+
 
   // Load all leads once, then filter client-side
   useEffect(() => {
@@ -321,12 +324,18 @@ function Leads() {
   };
 
   const handleScrape = async () => {
+    // Prevent rapid double-clicks (race condition protection)
+    if (scrapeInProgressRef.current || isScraping) {
+      console.log('[Leads] Scrape already in progress, ignoring duplicate request');
+      return;
+    }
+
     if (!keyword || !location) {
       setError('Please enter both keyword and location');
       return;
     }
 
-    // Check free tier limits
+    // Check free tier limits (frontend check - backend has atomic protection)
     if (isFreeTier) {
       if (!canGenerateLeads(maxResults)) {
         if (shouldShowHardPaywall('leads')) {
@@ -343,6 +352,9 @@ function Leads() {
         setShowPaywallModal(true);
       }
     }
+
+    // Set debounce flag immediately
+    scrapeInProgressRef.current = true;
 
     setError('');
     setSuccess('');
@@ -399,6 +411,8 @@ function Leads() {
     } finally {
       setIsScraping(false);
       setScrapeStatus('');
+      // Reset debounce flag
+      scrapeInProgressRef.current = false;
     }
   };
 
