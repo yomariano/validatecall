@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 
 const UsageContext = createContext();
@@ -66,9 +66,9 @@ export function UsageProvider({ children }) {
     }, [fetchUsage]);
 
     // Refresh usage data
-    const refreshUsage = useCallback(() => {
+    const refreshUsage = useCallback(async () => {
         setLoading(true);
-        fetchUsage();
+        return await fetchUsage();
     }, [fetchUsage]);
 
     // Check if user can generate leads
@@ -86,27 +86,29 @@ export function UsageProvider({ children }) {
     }, [usage]);
 
     // Get usage percentages (for progress bars)
-    const usagePercentage = {
+    const usagePercentage = useMemo(() => ({
         leads: usage?.usage
             ? Math.min(100, (usage.usage.leadsUsed / usage.usage.leadsLimit) * 100)
             : 0,
         calls: usage?.usage
             ? Math.min(100, (usage.usage.callsUsed / usage.usage.callsLimit) * 100)
             : 0
-    };
+    }), [usage]);
 
-    // Check if should show soft paywall (at 80% usage)
-    const shouldShowSoftPaywall = {
-        leads: usage?.isFreeTier && usagePercentage.leads >= 80 && usagePercentage.leads < 100,
-        calls: usage?.isFreeTier && usagePercentage.calls >= 80 && usagePercentage.calls < 100
-    };
+    const shouldShowSoftPaywall = useCallback((type) => {
+        if (!usage?.isFreeTier) return false;
+        if (type === 'leads') return usagePercentage.leads >= 80 && usagePercentage.leads < 100;
+        if (type === 'calls') return usagePercentage.calls >= 80 && usagePercentage.calls < 100;
+        return false;
+    }, [usage?.isFreeTier, usagePercentage]);
 
-    // Check if should show hard paywall (at 100% usage)
-    const shouldShowHardPaywall = {
-        leads: usage?.isFreeTier && usage?.usage?.leadsRemaining === 0,
-        calls: usage?.isFreeTier && usage?.usage?.callsRemaining === 0,
-        any: usage?.isFreeTier && (usage?.usage?.leadsRemaining === 0 || usage?.usage?.callsRemaining === 0)
-    };
+    const shouldShowHardPaywall = useCallback((type) => {
+        if (!usage?.isFreeTier) return false;
+        if (type === 'leads') return usage?.usage?.leadsRemaining === 0;
+        if (type === 'calls') return usage?.usage?.callsRemaining === 0;
+        if (type === 'any') return usage?.usage?.leadsRemaining === 0 || usage?.usage?.callsRemaining === 0;
+        return false;
+    }, [usage]);
 
     const value = {
         // State

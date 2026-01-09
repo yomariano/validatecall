@@ -70,6 +70,11 @@ export function AuthProvider({ children }) {
             // In localhost, just set the mock user
             setUser(MOCK_USER);
             AuthEvents.signinSuccess('localhost');
+
+            // Ensure all "Sign in" buttons work in localhost (landing pages don't navigate)
+            if (window.location.pathname !== '/dashboard') {
+                window.location.assign('/dashboard');
+            }
             return { user: MOCK_USER, error: null };
         }
 
