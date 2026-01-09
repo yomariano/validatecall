@@ -920,6 +920,7 @@ function Leads() {
                         disabled={isScraping}
                         className="pl-10 h-12 bg-white/50 border-white/20 rounded-xl"
                       >
+                        <option value={10}>10 businesses</option>
                         <option value={20}>20 businesses</option>
                         <option value={50}>50 businesses</option>
                         <option value={100}>100 businesses</option>
