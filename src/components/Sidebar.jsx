@@ -24,12 +24,12 @@ import { useAuth } from '@/context/AuthContext';
 import { useOnboarding } from './OnboardingWizard';
 
 const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/leads', icon: Users, label: 'Find Leads', step: 1 },
   { to: '/agents', icon: Bot, label: 'Voice Agents' },
   { to: '/campaigns', icon: PhoneCall, label: 'Campaigns', step: 2 },
   { to: '/history', icon: BarChart3, label: 'Analytics' },
-  { to: '/pricing', icon: CreditCard, label: 'Plans & Billing' },
+  { to: '/billing', icon: CreditCard, label: 'Plans & Billing' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
@@ -98,7 +98,7 @@ function Sidebar({ onShowWizard }) {
           <NavLink
             key={item.to}
             to={item.to}
-            end={item.to === '/'}
+            end={item.to === '/dashboard'}
             className={({ isActive }) =>
               cn(
                 'group flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-150',
@@ -160,7 +160,7 @@ function Sidebar({ onShowWizard }) {
       </div>
       <div className="px-4">
         <NavLink
-          to="/pricing"
+          to="/billing"
           className="flex items-center gap-3 rounded-lg px-4 py-3 bg-secondary/50 border border-border hover:bg-secondary transition-colors"
         >
           <Building2 className="h-5 w-5 text-muted-foreground" />

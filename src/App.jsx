@@ -14,6 +14,15 @@ import Settings from './pages/Settings';
 import Pricing from './pages/Pricing';
 import './App.css';
 
+// Helper component for protected routes with layout
+const ProtectedLayout = ({ children }) => (
+  <ProtectedRoute>
+    <Layout>
+      {children}
+    </Layout>
+  </ProtectedRoute>
+);
+
 function App() {
   return (
     <ThemeProvider>
@@ -24,24 +33,17 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/pricing" element={<PricingPublic />} />
 
-            {/* Protected routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Dashboard />} />
-              <Route path="leads" element={<Leads />} />
-              <Route path="campaigns" element={<Campaigns />} />
-              <Route path="agents" element={<Agents />} />
-              <Route path="history" element={<History />} />
-              <Route path="billing" element={<Pricing />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Route>
+            {/* Protected routes - flat structure */}
+            <Route path="/dashboard" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
+            <Route path="/leads" element={<ProtectedLayout><Leads /></ProtectedLayout>} />
+            <Route path="/campaigns" element={<ProtectedLayout><Campaigns /></ProtectedLayout>} />
+            <Route path="/agents" element={<ProtectedLayout><Agents /></ProtectedLayout>} />
+            <Route path="/history" element={<ProtectedLayout><History /></ProtectedLayout>} />
+            <Route path="/billing" element={<ProtectedLayout><Pricing /></ProtectedLayout>} />
+            <Route path="/settings" element={<ProtectedLayout><Settings /></ProtectedLayout>} />
+
+            {/* Catch-all redirect */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
