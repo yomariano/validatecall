@@ -1,0 +1,166 @@
+=================================================================
+   STRIPE LIVE MODE PRODUCTS - STEP BY STEP CREATION
+=================================================================
+
+📋 BEFORE YOU START:
+- Open https://dashboard.stripe.com in your browser
+- Make sure you're in LIVE mode (toggle at top-left)
+- Have this file open to copy/paste values
+
+=================================================================
+STEP 1: CREATE LITE PRODUCT ($197/month)
+=================================================================
+
+1. Click "Products" in left sidebar
+2. Click "+ Add Product" button
+3. Fill in the form:
+
+   Product name:
+   ValidateCall Lite
+
+   Description:
+   Perfect for testing and small-scale validation - 100 AI research calls per month
+
+4. Under "Pricing":
+   - Price: 197.00
+   - Currency: USD
+   - Billing period: Recurring
+   - Interval: Monthly
+
+5. Click "Add product"
+
+6. COPY THE PRODUCT ID (starts with prod_...)
+   Product ID: ________________
+
+=================================================================
+STEP 2: CREATE STARTER PRODUCT ($497/month)
+=================================================================
+
+1. Click "+ Add Product" button
+2. Fill in the form:
+
+   Product name:
+   ValidateCall Starter
+
+   Description:
+   Most popular for growing businesses - 500 AI research calls per month
+
+3. Under "Pricing":
+   - Price: 497.00
+   - Currency: USD
+   - Billing period: Recurring
+   - Interval: Monthly
+
+4. Click "Add product"
+
+5. COPY THE PRODUCT ID (starts with prod_...)
+   Product ID: ________________
+
+=================================================================
+STEP 3: CREATE PRO PRODUCT ($1,337/month)
+=================================================================
+
+1. Click "+ Add Product" button
+2. Fill in the form:
+
+   Product name:
+   ValidateCall Pro
+
+   Description:
+   Best value for enterprises and agencies - 2000 AI research calls per month
+
+3. Under "Pricing":
+   - Price: 1337.00
+   - Currency: USD
+   - Billing period: Recurring
+   - Interval: Monthly
+
+4. Click "Add product"
+
+5. COPY THE PRODUCT ID (starts with prod_...)
+   Product ID: ________________
+
+=================================================================
+STEP 4: CREATE PAYMENT LINK FOR LITE
+=================================================================
+
+1. Click "Payment links" in left sidebar
+2. Click "+ New" button
+3. Select "ValidateCall Lite" product
+4. Configure payment link:
+   - After payment: Redirect to https://validatecall.com/dashboard
+   - Allow promotion codes: Yes (optional)
+   - Collect shipping address: No
+   - Enable free trial: 14 days (optional)
+
+5. Click "Create link"
+
+6. COPY THE PAYMENT LINK URL:
+   ____________________________________________
+
+=================================================================
+STEP 5: CREATE PAYMENT LINK FOR STARTER
+=================================================================
+
+1. Click "+ New" button
+2. Select "ValidateCall Starter" product
+3. Configure payment link:
+   - After payment: Redirect to https://validatecall.com/dashboard
+   - Allow promotion codes: Yes (optional)
+   - Collect shipping address: No
+   - Enable free trial: 14 days (optional)
+
+4. Click "Create link"
+
+5. COPY THE PAYMENT LINK URL:
+   ____________________________________________
+
+=================================================================
+STEP 6: CREATE PAYMENT LINK FOR PRO
+=================================================================
+
+1. Click "+ New" button
+2. Select "ValidateCall Pro" product
+3. Configure payment link:
+   - After payment: Redirect to https://validatecall.com/dashboard
+   - Allow promotion codes: Yes (optional)
+   - Collect shipping address: No
+   - Enable free trial: 14 days (optional)
+
+4. Click "Create link"
+
+5. COPY THE PAYMENT LINK URL:
+   ____________________________________________
+
+=================================================================
+STEP 7: UPDATE THE CODE
+=================================================================
+
+Open: C:\projects\validatecall\market-research-ai\src\pages\PricingPublic.jsx
+
+Find this section (around line 14-19):
+
+  live: {
+    lite: "https://buy.stripe.com/live_REPLACE_WITH_YOUR_LITE_LINK",
+    starter: "https://buy.stripe.com/live_REPLACE_WITH_YOUR_STARTER_LINK",
+    pro: "https://buy.stripe.com/live_REPLACE_WITH_YOUR_PRO_LINK",
+  }
+
+Replace with your actual payment links from steps 4-6.
+
+=================================================================
+STEP 8: TEST IT
+=================================================================
+
+1. Save the file
+2. Go to: http://localhost:5173/pricing
+3. Press: Ctrl+Shift+S
+4. Click: "Live Mode"
+5. Click any "Start with..." button
+6. Verify you're redirected to Stripe LIVE checkout
+
+=================================================================
+✅ DONE!
+=================================================================
+
+Your Stripe integration is now complete with both TEST and LIVE modes!

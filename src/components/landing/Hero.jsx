@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, Bot, Zap } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 const Hero = () => {
+  const { signInWithGoogle } = useAuth();
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       {/* Background Effects */}
@@ -51,11 +53,9 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-up" style={{ animationDelay: "0.3s" }}>
-            <Button variant="hero" size="xl" asChild>
-              <Link to="/login">
-                Start Free Trial
-                <ArrowRight className="h-5 w-5" />
-              </Link>
+            <Button variant="hero" size="xl" onClick={signInWithGoogle}>
+              Start Free Trial
+              <ArrowRight className="h-5 w-5" />
             </Button>
             <Button variant="heroOutline" size="xl">
               Watch Demo

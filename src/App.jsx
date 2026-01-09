@@ -5,7 +5,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import PricingPublic from './pages/PricingPublic';
-import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
 import Campaigns from './pages/Campaigns';
@@ -24,7 +23,6 @@ function App() {
             {/* Public routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/pricing" element={<PricingPublic />} />
-            <Route path="/login" element={<Login />} />
 
             {/* Protected routes */}
             <Route

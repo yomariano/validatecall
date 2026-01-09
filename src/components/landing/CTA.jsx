@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 const benefits = [
   "14-day free trial",
@@ -10,6 +11,8 @@ const benefits = [
 ];
 
 const CTA = () => {
+  const { signInWithGoogle } = useAuth();
+
   return (
     <section id="pricing" className="py-24 md:py-32 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent" />
@@ -40,11 +43,9 @@ const CTA = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button variant="hero" size="xl" asChild>
-              <Link to="/login">
-                Start Your Free Trial
-                <ArrowRight className="h-5 w-5" />
-              </Link>
+            <Button variant="hero" size="xl" onClick={signInWithGoogle}>
+              Start Your Free Trial
+              <ArrowRight className="h-5 w-5" />
             </Button>
             <Button variant="heroOutline" size="xl" asChild>
               <Link to="/pricing">

@@ -39,6 +39,7 @@ function Sidebar({ onShowWizard }) {
 
   const handleSignOut = async () => {
     await signOut();
+    window.location.href = '/';
   };
 
   // Get user display info

@@ -2,9 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Phone, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { signInWithGoogle } = useAuth();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -38,11 +40,11 @@ const Header = () => {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" asChild>
-              <Link to="/login">Sign In</Link>
+            <Button variant="ghost" onClick={signInWithGoogle}>
+              Sign In
             </Button>
-            <Button variant="hero" asChild>
-              <Link to="/login">Start Free Trial</Link>
+            <Button variant="hero" onClick={signInWithGoogle}>
+              Start Free Trial
             </Button>
           </div>
 
@@ -72,11 +74,11 @@ const Header = () => {
                 Pricing
               </Link>
               <div className="flex flex-col gap-3 pt-4">
-                <Button variant="ghost" className="w-full" asChild>
-                  <Link to="/login">Sign In</Link>
+                <Button variant="ghost" className="w-full" onClick={signInWithGoogle}>
+                  Sign In
                 </Button>
-                <Button variant="hero" className="w-full" asChild>
-                  <Link to="/login">Start Free Trial</Link>
+                <Button variant="hero" className="w-full" onClick={signInWithGoogle}>
+                  Start Free Trial
                 </Button>
               </div>
             </nav>
