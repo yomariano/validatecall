@@ -4,6 +4,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
+import PricingPublic from './pages/PricingPublic';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
@@ -22,6 +23,7 @@ function App() {
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Landing />} />
+            <Route path="/pricing" element={<PricingPublic />} />
             <Route path="/login" element={<Login />} />
 
             {/* Protected routes */}
@@ -38,7 +40,7 @@ function App() {
               <Route path="campaigns" element={<Campaigns />} />
               <Route path="agents" element={<Agents />} />
               <Route path="history" element={<History />} />
-              <Route path="pricing" element={<Pricing />} />
+              <Route path="billing" element={<Pricing />} />
               <Route path="settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>

@@ -31,9 +31,9 @@ const Header = () => {
             <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               How It Works
             </a>
-            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               Pricing
-            </a>
+            </Link>
           </nav>
 
           {/* CTA Buttons */}
@@ -68,9 +68,9 @@ const Header = () => {
               <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 How It Works
               </a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
+              <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 Pricing
-              </a>
+              </Link>
               <div className="flex flex-col gap-3 pt-4">
                 <Button variant="ghost" className="w-full" asChild>
                   <Link to="/login">Sign In</Link>

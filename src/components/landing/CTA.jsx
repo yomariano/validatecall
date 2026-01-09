@@ -46,8 +46,10 @@ const CTA = () => {
                 <ArrowRight className="h-5 w-5" />
               </Link>
             </Button>
-            <Button variant="heroOutline" size="xl">
-              Talk to Sales
+            <Button variant="heroOutline" size="xl" asChild>
+              <Link to="/pricing">
+                View Pricing
+              </Link>
             </Button>
           </div>
         </div>
