@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { X, Zap, Users, Phone, TrendingUp, Clock, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { PaywallEvents } from '@/lib/analytics';
 
 /**
  * Soft paywall modal - shows when user is approaching limits
@@ -16,6 +17,23 @@ function PaywallModal({
     limit,
     remaining
 }) {
+    // Track when soft paywall is shown
+    useEffect(() => {
+        if (isOpen) {
+            const usagePercent = limit > 0 ? Math.round((used / limit) * 100) : 0;
+            PaywallEvents.softPaywallShown(type, usagePercent);
+        }
+    }, [isOpen, type, used, limit]);
+
+    const handleClose = () => {
+        PaywallEvents.softPaywallDismissed(type);
+        onClose();
+    };
+
+    const handleUpgradeClick = () => {
+        PaywallEvents.upgradeClicked('soft_paywall');
+    };
+
     if (!isOpen) return null;
 
     const content = {
@@ -50,7 +68,7 @@ function PaywallModal({
             <div className="relative w-full max-w-md bg-card rounded-2xl shadow-2xl border border-border overflow-hidden animate-scale-up">
                 {/* Close button */}
                 <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="absolute top-4 right-4 p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
                 >
                     <X className="h-5 w-5" />
@@ -84,7 +102,7 @@ function PaywallModal({
 
                 {/* Actions */}
                 <div className="px-6 pb-6 space-y-3">
-                    <Button asChild className="w-full" variant="hero">
+                    <Button asChild className="w-full" variant="hero" onClick={handleUpgradeClick}>
                         <Link to="/billing">
                             <Zap className="h-4 w-4 mr-2" />
                             Upgrade Now
@@ -93,7 +111,7 @@ function PaywallModal({
                     <Button
                         variant="ghost"
                         className="w-full text-muted-foreground"
-                        onClick={onClose}
+                        onClick={handleClose}
                     >
                         Maybe later
                     </Button>

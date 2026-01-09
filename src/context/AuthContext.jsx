@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { AuthEvents } from '@/lib/analytics';
 
 const AuthContext = createContext();
 
@@ -63,9 +64,12 @@ export function AuthProvider({ children }) {
     }, []);
 
     const signInWithGoogle = async () => {
+        AuthEvents.googleSigninClicked();
+
         if (IS_LOCALHOST) {
             // In localhost, just set the mock user
             setUser(MOCK_USER);
+            AuthEvents.signinSuccess('localhost');
             return { user: MOCK_USER, error: null };
         }
 
@@ -87,6 +91,7 @@ export function AuthProvider({ children }) {
             });
 
             if (error) throw error;
+            AuthEvents.signinSuccess('google');
             return { data, error: null };
         } catch (err) {
             setError(err.message);
@@ -95,6 +100,8 @@ export function AuthProvider({ children }) {
     };
 
     const signOut = async () => {
+        AuthEvents.signout();
+
         if (IS_LOCALHOST) {
             // In localhost, just clear the mock user then set it back
             // (simulating still having access after logout for dev convenience)

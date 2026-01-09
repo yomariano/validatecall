@@ -4,7 +4,11 @@ import { scrapeAndWait } from '../services/leads';
 import { saveLeads, getLeads, getLeadsStats } from '../services/supabase';
 import { vapiApi, scheduledApi, claudeApi, supabaseApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useUsage } from '../context/UsageContext';
 import { useOnboarding } from '../components/OnboardingWizard';
+import PaywallModal from '../components/PaywallModal';
+import HardPaywall from '../components/HardPaywall';
+import { LeadEvents, AgentEvents, ErrorEvents, NavigationEvents } from '@/lib/analytics';
 import {
   Search,
   MapPin,
@@ -118,8 +122,22 @@ function AIGenerator({ type, onGenerate, placeholder }) {
 function Leads() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const {
+    isFreeTier,
+    leadsUsed,
+    leadsLimit,
+    callsUsed,
+    callsLimit,
+    canGenerateLeads,
+    shouldShowSoftPaywall,
+    shouldShowHardPaywall,
+    refreshUsage
+  } = useUsage();
   const { completeStep } = useOnboarding();
   const fileInputRef = useRef(null);
+
+  // Paywall state
+  const [showPaywallModal, setShowPaywallModal] = useState(false);
 
   // Scraping state
   const [keyword, setKeyword] = useState('');
@@ -268,6 +286,11 @@ function Leads() {
         }
       }
       console.log(`Classified ${totalClassified} leads into industries`);
+
+      // Track classification completion
+      if (totalClassified > 0) {
+        LeadEvents.classified(totalClassified);
+      }
     } catch (err) {
       console.error('Industry classification error:', err);
       // Don't throw - classification is optional
@@ -303,10 +326,31 @@ function Leads() {
       return;
     }
 
+    // Check free tier limits
+    if (isFreeTier) {
+      if (!canGenerateLeads(maxResults)) {
+        if (shouldShowHardPaywall('leads')) {
+          // Hard paywall will be shown by the component
+          return;
+        }
+        setError(`Free tier limit: You can only generate ${leadsLimit - leadsUsed} more leads. Upgrade to continue.`);
+        setShowPaywallModal(true);
+        return;
+      }
+
+      // Show soft paywall warning at 80% usage
+      if (shouldShowSoftPaywall('leads')) {
+        setShowPaywallModal(true);
+      }
+    }
+
     setError('');
     setSuccess('');
     setIsScraping(true);
     setScrapeStatus('Starting scrape...');
+
+    // Track scrape started
+    LeadEvents.scrapeStarted(keyword, location, maxResults);
 
     try {
       const results = await scrapeAndWait(
@@ -319,7 +363,14 @@ function Leads() {
       try {
         const { saved, duplicates } = await saveLeads(results, keyword, location);
         setSuccess(`Saved ${saved} new leads (${duplicates} duplicates skipped)`);
-        if (saved > 0) completeStep(1); // Mark "Find Leads" step as complete
+
+        // Track scrape completed
+        LeadEvents.scrapeCompleted(results.length, duplicates, saved);
+
+        if (saved > 0) {
+          completeStep(1); // Mark "Find Leads" step as complete
+          refreshUsage(); // Update usage stats
+        }
 
         // Classify industries using AI
         if (saved > 0) {
@@ -339,10 +390,12 @@ function Leads() {
         // Database not available, show results in UI
         setAllLeads(results.map((r, i) => ({ ...r, id: i, status: 'new' })));
         setSuccess(`Found ${results.length} leads.`);
+        LeadEvents.scrapeCompleted(results.length, 0, results.length);
         completeStep(1); // Mark step complete even without DB
       }
     } catch (err) {
       setError(err.message);
+      ErrorEvents.scrapeError(err.message);
     } finally {
       setIsScraping(false);
       setScrapeStatus('');
@@ -416,6 +469,8 @@ function Leads() {
     setSuccess('');
     setIsImporting(true);
 
+    const fileType = file.name.endsWith('.json') ? 'json' : 'csv';
+
     try {
       const text = await file.text();
       let parsedLeads = [];
@@ -440,6 +495,10 @@ function Leads() {
       try {
         const { saved, duplicates } = await saveLeads(parsedLeads, 'import', 'file');
         setSuccess(`Imported ${saved} new leads (${duplicates} duplicates skipped)`);
+
+        // Track file import
+        LeadEvents.fileImported(fileType, saved);
+
         if (saved > 0) {
           completeStep(1);
           // Classify industries for imported leads
@@ -453,6 +512,7 @@ function Leads() {
       } catch {
         setAllLeads(parsedLeads.map((r, i) => ({ ...r, id: i, status: 'new' })));
         setSuccess(`Imported ${parsedLeads.length} leads.`);
+        LeadEvents.fileImported(fileType, parsedLeads.length);
         completeStep(1);
       }
     } catch (err) {
@@ -494,6 +554,10 @@ function Leads() {
       try {
         const { saved, duplicates } = await saveLeads(parsedLeads, 'import', 'paste');
         setSuccess(`Imported ${saved} new leads (${duplicates} duplicates skipped)`);
+
+        // Track paste import
+        LeadEvents.pasteImported(saved);
+
         if (saved > 0) {
           completeStep(1);
           // Classify industries for imported leads
@@ -508,6 +572,7 @@ function Leads() {
       } catch {
         setAllLeads(parsedLeads.map((r, i) => ({ ...r, id: i, status: 'new' })));
         setSuccess(`Imported ${parsedLeads.length} leads.`);
+        LeadEvents.pasteImported(parsedLeads.length);
         completeStep(1);
         setPasteData('');
       }
@@ -520,6 +585,8 @@ function Leads() {
 
   // Download sample CSV
   const downloadSampleCSV = () => {
+    LeadEvents.sampleCsvDownloaded();
+
     const csv = `name,phone,email,address,city,category
 "Joe's Pizza","+1-555-0123","joe@pizza.com","123 Main St","New York","Restaurant"
 "Best Plumbing","+1-555-0456","info@bestplumbing.com","456 Oak Ave","Los Angeles","Plumber"
@@ -619,6 +686,13 @@ function Leads() {
     setIsCalling(true);
     setCallStatus(isScheduleMode ? 'Scheduling call...' : 'Initiating call...');
 
+    // Track call initiation
+    if (testCallMode) {
+      LeadEvents.testCallInitiated();
+    } else {
+      LeadEvents.callInitiated(selectedLead?.id, isScheduleMode ? 'scheduled' : 'immediate');
+    }
+
     try {
       // Handle scheduled call
       if (isScheduleMode) {
@@ -684,6 +758,7 @@ function Leads() {
       }, 2000);
     } catch (err) {
       setCallStatus(`Error: ${err.message}`);
+      ErrorEvents.callError(err.message);
     } finally {
       setIsCalling(false);
     }
@@ -699,7 +774,31 @@ function Leads() {
     return <Badge variant={variants[status] || 'secondary'}>{status}</Badge>;
   };
 
+  // Show hard paywall if user has exhausted free tier leads
+  if (isFreeTier && shouldShowHardPaywall('leads')) {
+    return (
+      <HardPaywall
+        type="leads"
+        leadsUsed={leadsUsed}
+        leadsLimit={leadsLimit}
+        callsUsed={callsUsed}
+        callsLimit={callsLimit}
+      />
+    );
+  }
+
   return (
+    <>
+      {/* Soft Paywall Modal */}
+      <PaywallModal
+        isOpen={showPaywallModal}
+        onClose={() => setShowPaywallModal(false)}
+        type="leads"
+        used={leadsUsed}
+        limit={leadsLimit}
+        remaining={leadsLimit - leadsUsed}
+      />
+
     <div className={cn(
       "relative min-h-screen -mt-8 pt-8 px-4 overflow-hidden transition-all duration-300 ease-out",
       panelOpen ? "mr-[420px]" : "mr-0"
@@ -1571,6 +1670,7 @@ OR JSON format:
         )}
       </div>
     </div>
+    </>
   );
 }
 

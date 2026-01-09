@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Lock, Zap, Users, Phone, TrendingUp, ArrowRight, Sparkles, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { PaywallEvents } from '@/lib/analytics';
 
 /**
  * Hard paywall - blocks access when limits are exhausted
@@ -14,6 +16,14 @@ function HardPaywall({
     callsUsed = 0,
     callsLimit = 5
 }) {
+    // Track when hard paywall is shown
+    useEffect(() => {
+        PaywallEvents.hardPaywallShown(type);
+    }, [type]);
+
+    const handleUpgradeClick = () => {
+        PaywallEvents.upgradeClicked('hard_paywall');
+    };
     const content = {
         leads: {
             icon: Users,
@@ -121,7 +131,7 @@ function HardPaywall({
 
                 {/* CTA */}
                 <div className="text-center">
-                    <Button asChild size="lg" variant="hero" className="px-8">
+                    <Button asChild size="lg" variant="hero" className="px-8" onClick={handleUpgradeClick}>
                         <Link to="/billing">
                             <Zap className="h-5 w-5 mr-2" />
                             View All Plans

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Check, Phone, Zap, Building2, Loader2, ExternalLink } from 'lucide-react';
+import { PaywallEvents } from '@/lib/analytics';
 
 export default function Pricing() {
     const { user } = useAuth();
@@ -48,6 +49,9 @@ export default function Pricing() {
             alert('Please log in to subscribe');
             return;
         }
+
+        // Track plan selection
+        PaywallEvents.planSelected(planId);
 
         try {
             setRedirecting(planId);

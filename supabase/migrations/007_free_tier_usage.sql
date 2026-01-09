@@ -1,10 +1,10 @@
--- Free Tier Usage Tracking
+-- Free Tier Usage Tracking (Updated for auth.users)
 -- Tracks leads and calls usage for free tier users
 
 -- Create table
 CREATE TABLE IF NOT EXISTS free_tier_usage (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE UNIQUE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE NOT NULL,
   leads_used INTEGER DEFAULT 0,
   leads_limit INTEGER DEFAULT 10,
   calls_used INTEGER DEFAULT 0,
@@ -16,25 +16,6 @@ CREATE TABLE IF NOT EXISTS free_tier_usage (
 
 -- Create index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_free_tier_usage_user_id ON free_tier_usage(user_id);
-
--- Auto-create free tier usage record when a new profile is created
-CREATE OR REPLACE FUNCTION create_free_tier_usage()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO free_tier_usage (user_id)
-  VALUES (NEW.id)
-  ON CONFLICT (user_id) DO NOTHING;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Drop trigger if exists to avoid duplicate
-DROP TRIGGER IF EXISTS on_profile_created_free_tier ON profiles;
-
--- Create trigger
-CREATE TRIGGER on_profile_created_free_tier
-  AFTER INSERT ON profiles
-  FOR EACH ROW EXECUTE FUNCTION create_free_tier_usage();
 
 -- Update timestamp trigger
 CREATE OR REPLACE FUNCTION update_free_tier_usage_updated_at()
@@ -63,16 +44,20 @@ CREATE POLICY "Users can view own free tier usage" ON free_tier_usage
 CREATE POLICY "Users can update own free tier usage" ON free_tier_usage
   FOR UPDATE USING (auth.uid() = user_id);
 
+-- Users can insert their own usage record
+CREATE POLICY "Users can insert own free tier usage" ON free_tier_usage
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
 -- Service role can do everything (for backend API)
 CREATE POLICY "Service role has full access to free tier usage" ON free_tier_usage
   FOR ALL USING (auth.role() = 'service_role');
 
 -- Create free_tier_usage records for existing users who don't have one
 INSERT INTO free_tier_usage (user_id)
-SELECT id FROM profiles
+SELECT id FROM auth.users
 WHERE id NOT IN (SELECT user_id FROM free_tier_usage WHERE user_id IS NOT NULL)
 ON CONFLICT (user_id) DO NOTHING;
 
 -- Grant permissions
-GRANT SELECT, UPDATE ON free_tier_usage TO authenticated;
+GRANT SELECT, UPDATE, INSERT ON free_tier_usage TO authenticated;
 GRANT ALL ON free_tier_usage TO service_role;

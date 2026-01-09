@@ -4,7 +4,11 @@ import { createMarketResearchAssistant } from '../services/vapi';
 import { vapiApi } from '../services/api';
 import { getLeads, createCampaign, getCampaigns, saveCall } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useUsage } from '../context/UsageContext';
 import { useOnboarding } from '../components/OnboardingWizard';
+import PaywallModal from '../components/PaywallModal';
+import HardPaywall from '../components/HardPaywall';
+import { CampaignEvents, ErrorEvents } from '@/lib/analytics';
 import {
   Megaphone,
   Phone,
@@ -38,10 +42,24 @@ function Campaigns() {
   const location = useLocation();
   const { user } = useAuth();
   const { completeStep } = useOnboarding();
+  const {
+    isFreeTier,
+    callsUsed,
+    callsLimit,
+    leadsUsed,
+    leadsLimit,
+    canMakeCall,
+    shouldShowSoftPaywall,
+    shouldShowHardPaywall,
+    refreshUsage
+  } = useUsage();
   const [campaigns, setCampaigns] = useState([]);
   const [leads, setLeads] = useState([]);
   const [selectedLeadIds, setSelectedLeadIds] = useState(location.state?.selectedLeadIds || []);
   const [phoneStats, setPhoneStats] = useState(null);
+
+  // Paywall state
+  const [showPaywallModal, setShowPaywallModal] = useState(false);
 
   // Agents
   const [agents, setAgents] = useState([]);
@@ -187,6 +205,9 @@ function Campaigns() {
         callResults: [], // Track call results per lead
       });
 
+      // Track campaign creation
+      CampaignEvents.created(selectedLeadIds.length, !!selectedAgentId);
+
       setSuccess('Campaign saved! You can now start calling leads.');
       loadData(); // Refresh campaigns list
     } catch (err) {
@@ -209,8 +230,27 @@ function Campaigns() {
       return;
     }
 
+    // Check free tier limits
+    if (isFreeTier) {
+      if (!canMakeCall()) {
+        if (shouldShowHardPaywall('calls')) {
+          return; // HardPaywall will be shown by the render
+        }
+        setError(`Free tier limit reached: You've used all ${callsLimit} calls.`);
+        setShowPaywallModal(true);
+        return;
+      }
+      if (shouldShowSoftPaywall('calls')) {
+        setShowPaywallModal(true);
+        // Don't return - let them continue after seeing the warning
+      }
+    }
+
     setIsCalling(true);
     setCallProgress({ current: 0, total: uncalledLeads.length, results: [] });
+
+    // Track batch call started
+    CampaignEvents.batchCallStarted(uncalledLeads.length);
 
     const results = [...activeCampaign.callResults];
 
@@ -237,8 +277,17 @@ function Campaigns() {
     const successCount = results.filter(r => r.status === 'initiated').length;
     const failCount = results.filter(r => r.status === 'failed').length;
 
+    // Track campaign completion
+    CampaignEvents.completed(successCount, failCount);
+
     setSuccess(`${successCount} calls initiated, ${failCount} failed.`);
-    if (successCount > 0) completeStep(2);
+    if (successCount > 0) {
+      completeStep(2);
+      // Refresh usage counts after successful calls
+      if (isFreeTier) {
+        await refreshUsage();
+      }
+    }
     setIsCalling(false);
   };
 
@@ -252,10 +301,28 @@ function Campaigns() {
       return;
     }
 
+    // Check free tier limits
+    if (isFreeTier) {
+      if (!canMakeCall()) {
+        if (shouldShowHardPaywall('calls')) {
+          return;
+        }
+        setError(`Free tier limit reached: You've used all ${callsLimit} calls.`);
+        setShowPaywallModal(true);
+        return;
+      }
+      if (shouldShowSoftPaywall('calls')) {
+        setShowPaywallModal(true);
+      }
+    }
+
     setIsCalling(true);
     setCallProgress({ current: 1, total: 1, results: [] });
 
     const result = await makeCall(lead, activeCampaign);
+
+    // Track single call result
+    CampaignEvents.singleCallMade(result.status);
 
     setActiveCampaign(prev => ({
       ...prev,
@@ -265,6 +332,10 @@ function Campaigns() {
     if (result.status === 'initiated') {
       setSuccess(`Call initiated to ${lead.name}`);
       completeStep(2);
+      // Refresh usage counts after successful call
+      if (isFreeTier) {
+        await refreshUsage();
+      }
     } else {
       setError(`Call failed: ${result.error}`);
     }
@@ -327,6 +398,7 @@ function Campaigns() {
 
   // Close active campaign and return to form
   const closeCampaign = () => {
+    CampaignEvents.closed();
     setActiveCampaign(null);
     setCampaignName('');
     setProductIdea('');
@@ -341,6 +413,9 @@ function Campaigns() {
     // Get leads that belong to this campaign
     const campaignLeadIds = campaign.lead_ids || [];
     const campaignLeads = leads.filter(l => campaignLeadIds.includes(l.id));
+
+    // Track campaign resume
+    CampaignEvents.resumed(campaign.id);
 
     setActiveCampaign({
       ...campaign,
@@ -362,19 +437,43 @@ function Campaigns() {
     return <Badge variant={variants[status] || 'info'}>{status}</Badge>;
   };
 
-  return (
-    <div className="space-y-8 animate-slide-up">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-          Campaigns
-        </h1>
-        <p className="text-muted-foreground">
-          Create and manage your calling campaigns
-        </p>
-      </div>
+  // Show hard paywall if free tier call limit exhausted
+  if (isFreeTier && shouldShowHardPaywall('calls')) {
+    return (
+      <HardPaywall
+        type="calls"
+        leadsUsed={leadsUsed}
+        leadsLimit={leadsLimit}
+        callsUsed={callsUsed}
+        callsLimit={callsLimit}
+      />
+    );
+  }
 
-      {/* Alerts */}
+  return (
+    <>
+      {/* Soft Paywall Modal */}
+      <PaywallModal
+        isOpen={showPaywallModal}
+        onClose={() => setShowPaywallModal(false)}
+        type="calls"
+        used={callsUsed}
+        limit={callsLimit}
+        remaining={callsLimit - callsUsed}
+      />
+
+      <div className="space-y-8 animate-slide-up">
+        {/* Page Header */}
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+            Campaigns
+          </h1>
+          <p className="text-muted-foreground">
+            Create and manage your calling campaigns
+          </p>
+        </div>
+
+        {/* Alerts */}
       {error && (
         <Alert variant="destructive" onClose={() => setError('')}>
           <AlertDescription>{error}</AlertDescription>
@@ -912,7 +1011,8 @@ function Campaigns() {
           </CardContent>
         </Card>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

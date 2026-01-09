@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { UsageProvider } from '@/context/UsageContext';
@@ -13,7 +14,19 @@ import Agents from './pages/Agents';
 import History from './pages/History';
 import Settings from './pages/Settings';
 import Pricing from './pages/Pricing';
+import { trackRouteChange } from '@/lib/analytics';
 import './App.css';
+
+// Component to track page views on route changes
+function PageTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    trackRouteChange(location.pathname);
+  }, [location.pathname]);
+
+  return null;
+}
 
 // Helper component for protected routes with layout
 const ProtectedLayout = ({ children }) => (
@@ -30,6 +43,7 @@ function App() {
       <AuthProvider>
         <UsageProvider>
           <BrowserRouter>
+            <PageTracker />
             <Routes>
             {/* Public routes */}
             <Route path="/" element={<Landing />} />
