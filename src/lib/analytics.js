@@ -2,10 +2,19 @@
  * Umami Analytics Utility
  *
  * Helper functions for tracking events with Umami analytics.
- * Replace YOUR_WEBSITE_ID in index.html with your actual Umami website ID.
+ * Configure via environment variables:
+ *   - VITE_UMAMI_SCRIPT_URL: URL to the Umami tracking script
+ *   - VITE_UMAMI_WEBSITE_ID: Your Umami website ID
  *
  * @see https://umami.is/docs/track-events
  */
+
+/**
+ * Check if Umami is properly configured and loaded
+ */
+function isUmamiAvailable() {
+  return typeof window !== 'undefined' && window.umami && typeof window.umami.track === 'function';
+}
 
 /**
  * Track a custom event with Umami
@@ -13,7 +22,7 @@
  * @param {Object} [eventData] - Optional data to send with the event
  */
 export function trackEvent(eventName, eventData = {}) {
-  if (typeof window !== 'undefined' && window.umami) {
+  if (isUmamiAvailable()) {
     window.umami.track(eventName, eventData);
   }
 }
@@ -23,7 +32,7 @@ export function trackEvent(eventName, eventData = {}) {
  * @param {string} [url] - Optional custom URL to track
  */
 export function trackPageView(url) {
-  if (typeof window !== 'undefined' && window.umami) {
+  if (isUmamiAvailable()) {
     if (url) {
       window.umami.track(props => ({ ...props, url }));
     } else {

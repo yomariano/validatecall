@@ -5,7 +5,6 @@ import {
   Search,
   Phone,
   History,
-  Settings,
   PhoneCall,
   Building2,
   BarChart3,
@@ -32,7 +31,6 @@ const navItems = [
   { to: '/campaigns', icon: PhoneCall, label: 'Campaigns', step: 2 },
   { to: '/history', icon: BarChart3, label: 'Analytics' },
   { to: '/billing', icon: CreditCard, label: 'Plans & Billing' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 function Sidebar({ onShowWizard }) {
