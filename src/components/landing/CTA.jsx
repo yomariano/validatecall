@@ -14,7 +14,7 @@ const CTA = () => {
   const { signInWithGoogle } = useAuth();
 
   return (
-    <section id="pricing" className="py-24 md:py-32 relative">
+    <section id="pricing" className="py-16 md:py-20 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent" />
 
       <div className="container mx-auto px-6 relative z-10">

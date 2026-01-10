@@ -16,7 +16,7 @@ const industries = [
 
 const Industries = () => {
   return (
-    <section id="industries" className="py-24 md:py-32 relative overflow-hidden">
+    <section id="industries" className="py-16 md:py-20 relative overflow-hidden">
       <div className="container mx-auto px-6">
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center mb-16">
