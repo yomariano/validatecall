@@ -1,16 +1,17 @@
-import { Building2, ShoppingCart, Briefcase, GraduationCap, Heart, Home, Car, Plane, Utensils, Laptop } from "lucide-react";
+import { Building2, ShoppingCart, Briefcase, GraduationCap, Heart, Home, Car, Plane, Utensils, Laptop, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const industries = [
-  { icon: Building2, name: "Real Estate" },
-  { icon: ShoppingCart, name: "E-Commerce" },
-  { icon: Briefcase, name: "B2B Services" },
-  { icon: GraduationCap, name: "Education" },
-  { icon: Heart, name: "Healthcare" },
-  { icon: Home, name: "Home Services" },
-  { icon: Car, name: "Automotive" },
-  { icon: Plane, name: "Travel" },
-  { icon: Utensils, name: "Restaurant" },
-  { icon: Laptop, name: "Technology" },
+  { icon: Building2, name: "Real Estate", slug: "real-estate" },
+  { icon: ShoppingCart, name: "E-Commerce", slug: "ecommerce" },
+  { icon: Briefcase, name: "B2B Services", slug: "consulting-firms" },
+  { icon: GraduationCap, name: "Education", slug: "tutoring-services" },
+  { icon: Heart, name: "Healthcare", slug: "medical-practices" },
+  { icon: Home, name: "Home Services", slug: "plumbers" },
+  { icon: Car, name: "Automotive", slug: "auto-repair" },
+  { icon: Plane, name: "Travel", slug: "travel-agencies" },
+  { icon: Utensils, name: "Restaurant", slug: "restaurants" },
+  { icon: Laptop, name: "Technology", slug: "it-services" },
 ];
 
 const Industries = () => {
@@ -31,9 +32,10 @@ const Industries = () => {
         {/* Industries Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-12">
           {industries.map((industry, index) => (
-            <div
+            <a
               key={index}
-              className="group glass-card p-6 rounded-xl text-center transition-all duration-300 hover:scale-105 hover:border-primary/50 cursor-pointer"
+              href={`/industries/${industry.slug}`}
+              className="group glass-card p-6 rounded-xl text-center transition-all duration-300 hover:scale-105 hover:border-primary/50"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 mx-auto mb-4 group-hover:from-primary/30 group-hover:to-accent/30 transition-colors">
                 <industry.icon className="h-6 w-6 text-primary" />
@@ -41,19 +43,25 @@ const Industries = () => {
               <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
                 {industry.name}
               </span>
-            </div>
+            </a>
           ))}
         </div>
 
         {/* More Industries Banner */}
-        <div className="glass-card rounded-2xl p-8 md:p-12 text-center">
+        <a
+          href="/industries"
+          className="glass-card rounded-2xl p-8 md:p-12 text-center block hover:border-primary/50 transition-all duration-300 group"
+        >
           <p className="text-2xl md:text-3xl font-display font-semibold mb-2">
             <span className="text-gradient">+90 More Industries</span>
           </p>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-4">
             From finance to fitness, legal to logistics—validate your ideas in any market.
           </p>
-        </div>
+          <span className="inline-flex items-center gap-2 text-primary font-medium group-hover:gap-3 transition-all">
+            View All Industries <ArrowRight className="h-4 w-4" />
+          </span>
+        </a>
       </div>
     </section>
   );

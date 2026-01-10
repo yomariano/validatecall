@@ -1,0 +1,53 @@
+# ValidateCall Programmatic SEO - Cloudflare Workers
+name = "validatecall-seo"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Minification
+minify = true
+
+# Routes - serve SEO pages from validatecall.com
+routes = [
+  { pattern = "validatecall.com/industries/*", zone_name = "validatecall.com" },
+  { pattern = "validatecall.com/industries", zone_name = "validatecall.com" },
+  { pattern = "validatecall.com/locations/*", zone_name = "validatecall.com" },
+  { pattern = "validatecall.com/locations", zone_name = "validatecall.com" },
+  { pattern = "validatecall.com/use-cases/*", zone_name = "validatecall.com" },
+  { pattern = "validatecall.com/compare/*", zone_name = "validatecall.com" },
+  { pattern = "validatecall.com/alternatives/*", zone_name = "validatecall.com" },
+  { pattern = "validatecall.com/sitemap.xml", zone_name = "validatecall.com" },
+  { pattern = "validatecall.com/sitemaps/*", zone_name = "validatecall.com" },
+  { pattern = "validatecall.com/robots.txt", zone_name = "validatecall.com" }
+]
+
+# Environment variables
+[vars]
+SITE_URL = "https://validatecall.com"
+APP_URL = "https://app.validatecall.com"
+ENVIRONMENT = "production"
+ADMIN_SECRET = "validatecall-seo-admin-2024"
+CLAUDE_API_URL = "https://claude-api.validatecall.com"
+
+# Note: CLAUDE_API_KEY is set as a secret via wrangler secret put
+
+# KV Namespaces
+[[kv_namespaces]]
+binding = "SEO_CACHE"
+id = "a385631145b4496ebb789ce3b97ff8e3"
+
+[[kv_namespaces]]
+binding = "CONTENT_CACHE"
+id = "56ed8a65b895437e89b93b4fa18f95f0"
+
+# Development settings
+[dev]
+port = 8787
+local_protocol = "http"
+
+# Cron trigger disabled - exceeded Cloudflare limit (5 max)
+# Use /admin/generate-all endpoint with POST request to trigger content generation
+# Or set up external cron service (e.g., GitHub Actions, cron-job.org) to call:
+# POST https://validatecall-seo.isoview.workers.dev/admin/generate-all
+# [triggers]
+# crons = ["0 2 * * *"]

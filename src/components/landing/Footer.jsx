@@ -3,21 +3,22 @@ import { Phone } from "lucide-react";
 const footerLinks = {
   product: [
     { label: "Features", href: "#features" },
-    { label: "Industries", href: "#industries" },
+    { label: "All Industries", href: "/industries" },
     { label: "Pricing", href: "/pricing" },
-    { label: "Integrations", href: "#" },
+    { label: "How It Works", href: "#how-it-works" },
   ],
-  company: [
-    { label: "About Us", href: "#" },
-    { label: "Careers", href: "#" },
-    { label: "Blog", href: "#" },
-    { label: "Contact", href: "#" },
+  industries: [
+    { label: "Healthcare", href: "/industries/medical-practices" },
+    { label: "Real Estate", href: "/industries/real-estate" },
+    { label: "Home Services", href: "/industries/plumbers" },
+    { label: "Restaurants", href: "/industries/restaurants" },
+    { label: "View All 100+", href: "/industries" },
   ],
   resources: [
     { label: "Documentation", href: "#" },
     { label: "API Reference", href: "#" },
     { label: "Help Center", href: "#" },
-    { label: "Community", href: "#" },
+    { label: "Sitemap", href: "/sitemap.xml" },
   ],
   legal: [
     { label: "Privacy Policy", href: "#" },
@@ -62,9 +63,9 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Company</h4>
+            <h4 className="font-semibold mb-4">Industries</h4>
             <ul className="space-y-2">
-              {footerLinks.company.map((link, index) => (
+              {footerLinks.industries.map((link, index) => (
                 <li key={index}>
                   <a href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                     {link.label}

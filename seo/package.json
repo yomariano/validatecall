@@ -1,0 +1,22 @@
+{
+  "name": "validatecall-seo",
+  "version": "1.0.0",
+  "description": "Programmatic SEO pages for ValidateCall",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "echo 'No build step required'",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "kv:create": "wrangler kv:namespace create SEO_CACHE && wrangler kv:namespace create CONTENT_CACHE"
+  },
+  "dependencies": {
+    "hono": "^4.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240117.0",
+    "typescript": "^5.3.0",
+    "wrangler": "^3.22.0"
+  }
+}
