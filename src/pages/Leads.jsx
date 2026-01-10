@@ -366,7 +366,7 @@ function Leads() {
 
     try {
       const results = await scrapeAndWait(
-        { keyword, location, maxResults },
+        { keyword, location, maxResults, userId: user?.id },
         (status) => setScrapeStatus(status.message)
       );
 

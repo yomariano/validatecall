@@ -67,10 +67,10 @@ export const getHealth = () => apiRequest('/health');
 export const leads = {
     getStatus: () => apiRequest('/api/claude/status'),
 
-    scrape: ({ keyword, location, maxResults }) =>
+    scrape: ({ keyword, location, maxResults, userId }) =>
         apiRequest('/api/claude/generate-leads', {
             method: 'POST',
-            body: JSON.stringify({ keyword, location, maxResults }),
+            body: JSON.stringify({ keyword, location, maxResults, userId }),
         }),
 
     // Generate leads using Claude AI - returns results directly
