@@ -206,6 +206,8 @@ export async function industriesIndexHandler(c: Context): Promise<Response> {
       <div>
         <a href="${siteUrl}">Home</a>
         <a href="${siteUrl}/pricing">Pricing</a>
+        <a href="${siteUrl}/privacy">Privacy</a>
+        <a href="${siteUrl}/terms">Terms</a>
         <a href="${siteUrl}/sitemap.xml">Sitemap</a>
       </div>
     </div>

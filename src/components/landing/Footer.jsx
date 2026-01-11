@@ -15,16 +15,13 @@ const footerLinks = {
     { label: "View All 100+", href: "/industries" },
   ],
   resources: [
-    { label: "Documentation", href: "#" },
-    { label: "API Reference", href: "#" },
-    { label: "Help Center", href: "#" },
+    { label: "Getting Started", href: "/industries" },
+    { label: "Help & Support", href: "mailto:support@validatecall.com" },
     { label: "Sitemap", href: "/sitemap.xml" },
   ],
   legal: [
-    { label: "Privacy Policy", href: "#" },
-    { label: "Terms of Service", href: "#" },
-    { label: "GDPR", href: "#" },
-    { label: "Security", href: "#" },
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms of Service", href: "/terms" },
   ],
 };
 
@@ -108,14 +105,8 @@ const Footer = () => {
             © {new Date().getFullYear()} ValidateCall. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Twitter
-            </a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              LinkedIn
-            </a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              YouTube
+            <a href="mailto:support@validatecall.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Contact Us
             </a>
           </div>
         </div>

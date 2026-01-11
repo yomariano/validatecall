@@ -7,6 +7,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import PricingPublic from './pages/PricingPublic';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
 import Campaigns from './pages/Campaigns';
@@ -47,6 +49,8 @@ function App() {
             {/* Public routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/pricing" element={<PricingPublic />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
 
             {/* Protected routes - flat structure */}
             <Route path="/dashboard" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />

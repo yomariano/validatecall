@@ -280,9 +280,9 @@ function generateIndustryPage(industry: Industry, env: any): string {
         </div>
         <div class="footer-col">
           <h4>Resources</h4>
-          <a href="${siteUrl}/blog">Blog</a>
-          <a href="${siteUrl}/use-cases">Use Cases</a>
-          <a href="${siteUrl}/compare">Comparisons</a>
+          <a href="${siteUrl}/industries">All Industries</a>
+          <a href="${siteUrl}/sitemap.xml">Sitemap</a>
+          <a href="mailto:support@validatecall.com">Help & Support</a>
         </div>
         <div class="footer-col">
           <h4>Legal</h4>
@@ -1056,9 +1056,9 @@ function generateDynamicIndustryPage(industry: Industry, content: GeneratedConte
         </div>
         <div class="footer-col">
           <h4>Resources</h4>
-          <a href="${siteUrl}/blog">Blog</a>
-          <a href="${siteUrl}/use-cases">Use Cases</a>
-          <a href="${siteUrl}/compare">Comparisons</a>
+          <a href="${siteUrl}/industries">All Industries</a>
+          <a href="${siteUrl}/sitemap.xml">Sitemap</a>
+          <a href="mailto:support@validatecall.com">Help & Support</a>
         </div>
         <div class="footer-col">
           <h4>Legal</h4>
