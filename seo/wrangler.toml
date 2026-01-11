@@ -18,7 +18,8 @@ routes = [
   { pattern = "validatecall.com/alternatives/*", zone_name = "validatecall.com" },
   { pattern = "validatecall.com/sitemap.xml", zone_name = "validatecall.com" },
   { pattern = "validatecall.com/sitemaps/*", zone_name = "validatecall.com" },
-  { pattern = "validatecall.com/robots.txt", zone_name = "validatecall.com" }
+  { pattern = "validatecall.com/robots.txt", zone_name = "validatecall.com" },
+  { pattern = "validatecall.com/admin/*", zone_name = "validatecall.com" }
 ]
 
 # Environment variables
@@ -45,9 +46,7 @@ id = "56ed8a65b895437e89b93b4fa18f95f0"
 port = 8787
 local_protocol = "http"
 
-# Cron trigger disabled - exceeded Cloudflare limit (5 max)
-# Use /admin/generate-all endpoint with POST request to trigger content generation
-# Or set up external cron service (e.g., GitHub Actions, cron-job.org) to call:
-# POST https://validatecall-seo.isoview.workers.dev/admin/generate-all
-# [triggers]
-# crons = ["0 2 * * *"]
+# Cron trigger disabled - Cloudflare limit of 5 reached
+# Use cron-job.org (free) to call daily at 2am:
+# POST https://validatecall.com/admin/generate-all
+# Body: {"secret":"validatecall-seo-admin-2024"}

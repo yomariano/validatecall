@@ -54,11 +54,11 @@ app.get('/robots.txt', robotsHandler);
 app.get('/sitemap.xml', sitemapIndexHandler);
 app.get('/sitemaps/:type.xml', sitemapHandler);
 
+// Industry index page - lists all 100+ industries (must be before parameterized route)
+app.get('/industries', industriesIndexHandler);
+
 // Industry pages: /industries/dental-clinics
 app.get('/industries/:industry', industryHandler);
-
-// Industry index page - lists all 100+ industries
-app.get('/industries', industriesIndexHandler);
 
 // Location pages: /locations/ireland/dublin
 app.get('/locations/:country/:city', locationHandler);

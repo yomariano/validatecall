@@ -1,6 +1,7 @@
 /**
  * Scheduled handler - runs daily at 2am UTC
  * Generates fresh AI content for SEO pages using Claude
+ * Enhanced with Google News RSS for current industry trends
  */
 
 import { INDUSTRIES, getIndustrySlugs } from '../data/industries';
@@ -11,12 +12,22 @@ import {
   buildCacheKey,
   ContentRequest,
 } from '../utils/claude';
+import {
+  fetchIndustryNews,
+  cacheNews,
+  getCachedNews,
+  NewsArticle,
+} from '../utils/news';
 
 interface Env {
   CONTENT_CACHE: KVNamespace;
+  SEO_CACHE: KVNamespace;
   CLAUDE_API_KEY: string;
   CLAUDE_API_URL?: string;
 }
+
+// Cache for industry news to avoid fetching same news multiple times
+const newsCache: Map<string, NewsArticle[]> = new Map();
 
 // Rate limiting - Claude API limits
 const DELAY_BETWEEN_REQUESTS = 500; // 500ms between API calls
@@ -114,9 +125,24 @@ export async function scheduledHandler(
         }
       }
 
-      // Generate fresh content
+      // Fetch industry news if applicable
+      let newsArticles: NewsArticle[] = [];
+      if (task.industry) {
+        newsArticles = await getIndustryNewsWithCache(task.industry.name, env);
+        if (newsArticles.length > 0) {
+          console.log(`[Scheduled] Found ${newsArticles.length} news articles for ${task.industry.name}`);
+        }
+      }
+
+      // Add news to task for content generation
+      const taskWithNews: ContentRequest = {
+        ...task,
+        newsArticles,
+      };
+
+      // Generate fresh content with news context
       console.log(`[Scheduled] Generating content for ${cacheKey}`);
-      const content = await generateContent(env.CLAUDE_API_KEY, task, env.CLAUDE_API_URL);
+      const content = await generateContent(env.CLAUDE_API_KEY, taskWithNews, env.CLAUDE_API_URL);
 
       // Store in KV
       await storeContent(env.CONTENT_CACHE, cacheKey, content);
@@ -145,12 +171,58 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
+ * Fetch industry news with in-memory and KV caching
+ * This prevents fetching the same news multiple times during a single run
+ */
+async function getIndustryNewsWithCache(
+  industryName: string,
+  env: Env
+): Promise<NewsArticle[]> {
+  // Check in-memory cache first (for same run)
+  const cacheKeyMem = industryName.toLowerCase();
+  if (newsCache.has(cacheKeyMem)) {
+    return newsCache.get(cacheKeyMem) || [];
+  }
+
+  // Check KV cache (persisted, 6 hour TTL set in news.ts)
+  try {
+    const cached = await getCachedNews(env.SEO_CACHE, industryName);
+    if (cached && cached.articles.length > 0) {
+      // Store in memory cache for this run
+      newsCache.set(cacheKeyMem, cached.articles);
+      return cached.articles;
+    }
+  } catch (e) {
+    console.error(`[News] Error reading KV cache for ${industryName}:`, e);
+  }
+
+  // Fetch fresh news from Google News RSS
+  try {
+    console.log(`[News] Fetching fresh news for ${industryName}...`);
+    const articles = await fetchIndustryNews(industryName, 5);
+
+    // Cache in memory
+    newsCache.set(cacheKeyMem, articles);
+
+    // Cache in KV for future runs
+    if (articles.length > 0) {
+      await cacheNews(env.SEO_CACHE, industryName, articles);
+    }
+
+    return articles;
+  } catch (e) {
+    console.error(`[News] Error fetching news for ${industryName}:`, e);
+    return [];
+  }
+}
+
+/**
  * Manual trigger for testing - generates content for a specific page
  */
 export async function manualGenerateContent(
   env: Env,
   request: ContentRequest
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; message: string; newsCount?: number }> {
   if (!env.CLAUDE_API_KEY) {
     return { success: false, message: 'CLAUDE_API_KEY not configured' };
   }
@@ -158,9 +230,25 @@ export async function manualGenerateContent(
   const cacheKey = buildCacheKey(request);
 
   try {
-    const content = await generateContent(env.CLAUDE_API_KEY, request, env.CLAUDE_API_URL);
+    // Fetch news for industries
+    let newsArticles: NewsArticle[] = [];
+    if (request.industry) {
+      newsArticles = await getIndustryNewsWithCache(request.industry.name, env);
+    }
+
+    // Generate content with news context
+    const requestWithNews: ContentRequest = {
+      ...request,
+      newsArticles,
+    };
+
+    const content = await generateContent(env.CLAUDE_API_KEY, requestWithNews, env.CLAUDE_API_URL);
     await storeContent(env.CONTENT_CACHE, cacheKey, content);
-    return { success: true, message: `Content generated for ${cacheKey}` };
+    return {
+      success: true,
+      message: `Content generated for ${cacheKey}`,
+      newsCount: newsArticles.length,
+    };
   } catch (error) {
     return {
       success: false,
