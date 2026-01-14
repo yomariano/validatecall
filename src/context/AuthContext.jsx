@@ -15,6 +15,30 @@ const supabase = supabaseUrl && supabaseAnonKey
     ? createClient(supabaseUrl, supabaseAnonKey)
     : null;
 
+// API URL for backend calls
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+
+/**
+ * Send welcome email to new users (deduplication handled by backend)
+ */
+async function sendWelcomeEmail(user) {
+    if (!user?.email) return;
+
+    try {
+        await fetch(`${API_URL}/api/email/welcome`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: user.id,
+                email: user.email,
+                name: user.user_metadata?.full_name || user.user_metadata?.name,
+            }),
+        });
+    } catch (err) {
+        console.warn('Failed to send welcome email:', err.message);
+    }
+}
+
 // Mock user for localhost development
 const MOCK_USER = {
     id: '00000000-0000-0000-0000-000000000000',
@@ -54,9 +78,14 @@ export function AuthProvider({ children }) {
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            (_event, session) => {
+            (event, session) => {
                 setUser(session?.user ?? null);
                 setLoading(false);
+
+                // Send welcome email on sign in (deduplication handled by backend)
+                if (event === 'SIGNED_IN' && session?.user) {
+                    sendWelcomeEmail(session.user);
+                }
             }
         );
 

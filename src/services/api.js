@@ -142,6 +142,12 @@ export const supabaseApi = {
             body: JSON.stringify({ status }),
         }),
 
+    updateLead: (id, updates) =>
+        apiRequest(`/api/supabase/leads/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(updates),
+        }),
+
     updateLeadAfterCall: (id) =>
         apiRequest(`/api/supabase/leads/${id}/after-call`, {
             method: 'PATCH',
@@ -442,6 +448,29 @@ export const isClaudeConfigured = async () => {
     }
 };
 
+// =============================================
+// EMAIL - Cold Email Generation & Sending
+// =============================================
+
+export const emailApi = {
+    // Get email service status
+    getStatus: () => apiRequest('/api/email/status'),
+
+    // Generate AI-powered cold email for a lead
+    generateColdEmail: ({ lead, productIdea, companyContext, senderName }) =>
+        apiRequest('/api/email/generate-cold-email', {
+            method: 'POST',
+            body: JSON.stringify({ lead, productIdea, companyContext, senderName }),
+        }),
+
+    // Send cold email to a lead
+    sendColdEmail: ({ leadId, toEmail, toName, subject, body, senderName, senderCompany, userId }) =>
+        apiRequest('/api/email/send-cold-email', {
+            method: 'POST',
+            body: JSON.stringify({ leadId, toEmail, toName, subject, body, senderName, senderCompany, userId }),
+        }),
+};
+
 // Format duration from seconds (utility function kept client-side)
 export const formatDuration = (seconds) => {
     if (!seconds) return '-';
@@ -499,6 +528,7 @@ export default {
     scheduledApi,
     claudeApi,
     usageApi,
+    emailApi,
     isLeadsConfigured,
     isSupabaseConfigured,
     isVapiConfigured,

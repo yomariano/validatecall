@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { scrapeAndWait } from '../services/leads';
 import { saveLeads, getLeads, getLeadsStats } from '../services/supabase';
-import { vapiApi, scheduledApi, claudeApi, supabaseApi } from '../services/api';
+import { vapiApi, scheduledApi, claudeApi, supabaseApi, emailApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useUsage } from '../context/UsageContext';
 import { useOnboarding } from '../components/OnboardingWizard';
@@ -41,7 +41,9 @@ import {
   Send,
   Filter,
   Tag,
-  MapPinned
+  MapPinned,
+  Mail,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, StatCard } from '@/components/ui/card';
@@ -197,6 +199,24 @@ function Leads() {
   const [isScheduleMode, setIsScheduleMode] = useState(false);
   const [scheduledDateTime, setScheduledDateTime] = useState('');
 
+  // Email state
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailStatus, setEmailStatus] = useState('');
+
+  // Edit panel state
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editAddress, setEditAddress] = useState('');
+  const [editWebsite, setEditWebsite] = useState('');
+  const [editStatus, setEditStatus] = useState('new');
+  const [editCity, setEditCity] = useState('');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
   // Debounce ref to prevent rapid double-clicks on search
   const scrapeInProgressRef = useRef(false);
 
@@ -256,12 +276,15 @@ function Leads() {
 
   const loadLeads = async () => {
     try {
+      console.log('[Leads] Loading leads from database...');
       const [leadsData, statsData] = await Promise.all([
         getLeads({}), // Load all leads, filter client-side
         getLeadsStats(),
       ]);
 
-      setAllLeads(leadsData);
+      console.log('[Leads] Loaded leads:', leadsData?.length, 'leads');
+      console.log('[Leads] First lead sample:', leadsData?.[0]);
+      setAllLeads(leadsData || []);
       setStats(statsData);
     } catch (err) {
       console.error('Error loading leads:', err);
@@ -371,9 +394,12 @@ function Leads() {
       );
 
       setScrapeStatus(`Found ${results.length} businesses with phone numbers`);
+      console.log('[Leads] Generated leads:', results);
 
       try {
+        console.log('[Leads] Saving leads to database...');
         const { saved, duplicates } = await saveLeads(results, keyword, location);
+        console.log('[Leads] Save result:', { saved, duplicates });
         setSuccess(`Saved ${saved} new leads (${duplicates} duplicates skipped)`);
 
         // Track scrape completed
@@ -398,10 +424,18 @@ function Leads() {
         }
 
         loadLeads();
-      } catch {
+      } catch (saveErr) {
         // Database not available, show results in UI
-        setAllLeads(results.map((r, i) => ({ ...r, id: i, status: 'new' })));
-        setSuccess(`Found ${results.length} leads.`);
+        console.error('Save leads error:', saveErr);
+        // Map camelCase to snake_case for consistency with DB format
+        setAllLeads(results.map((r, i) => ({
+          ...r,
+          id: i,
+          status: 'new',
+          review_count: r.reviewCount,
+          place_id: r.placeId,
+        })));
+        setSuccess(`Found ${results.length} leads (not saved to database).`);
         LeadEvents.scrapeCompleted(results.length, 0, results.length);
         completeStep(1); // Mark step complete even without DB
       }
@@ -647,13 +681,30 @@ function Leads() {
     setScheduledDateTime('');
     setSelectedLead(lead || (type === 'test-call' ? { name: 'Test Call', phone: '' } : null));
     setCallStatus('');
+    // Reset email state when opening panel
+    setEmailSubject('');
+    setEmailBody('');
+    setEmailStatus('');
+    setIsGeneratingEmail(false);
+    setIsSendingEmail(false);
+    // Initialize edit form state when opening edit panel
+    if (type === 'edit' && lead) {
+      setEditName(lead.name || '');
+      setEditPhone(lead.phone || '');
+      setEditEmail(lead.email || '');
+      setEditCategory(lead.category || '');
+      setEditAddress(lead.address || '');
+      setEditWebsite(lead.website || '');
+      setEditStatus(lead.status || 'new');
+      setEditCity(lead.city || '');
+    }
     setPanelType(type === 'test-call' ? 'call' : type);
     setPanelOpen(true);
   };
 
   // Close side panel
   const closePanel = () => {
-    if (!isCalling) {
+    if (!isCalling && !isSendingEmail && !isSavingEdit) {
       setPanelOpen(false);
       setPanelType(null);
       setSelectedLead(null);
@@ -1213,6 +1264,8 @@ OR JSON format:
                       </TableHead>
                       <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Business Details</TableHead>
                       <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Contact</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Email</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">City</TableHead>
                       <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Industry</TableHead>
                       <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Rating</TableHead>
                       <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Status</TableHead>
@@ -1253,6 +1306,27 @@ OR JSON format:
                           </a>
                         </TableCell>
                         <TableCell>
+                          {lead.email ? (
+                            <a
+                              href={`mailto:${lead.email}`}
+                              className="text-primary hover:underline flex items-center gap-1 text-sm"
+                              title={lead.email}
+                            >
+                              <Mail className="h-3 w-3 shrink-0" />
+                              <span className="truncate max-w-[140px]">{lead.email}</span>
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {(lead.city || lead.search_location) ? (
+                            <span className="text-sm">{lead.city || lead.search_location}</span>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           {lead.category && (
                             <Badge variant="secondary">{lead.category}</Badge>
                           )}
@@ -1281,6 +1355,15 @@ OR JSON format:
                               title="Call lead"
                             >
                               <PhoneCall className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openPanel('email', lead)}
+                              className="h-8 w-8 p-0 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-transform hover:scale-110"
+                              title="Send cold email"
+                            >
+                              <Mail className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
@@ -1321,6 +1404,7 @@ OR JSON format:
               <div>
                 <h2 className="text-xl font-semibold">
                   {panelType === 'call' && (testCallMode ? '🧪 Test Call' : `Call ${selectedLead.name}`)}
+                  {panelType === 'email' && `Email ${selectedLead.name}`}
                   {panelType === 'edit' && `Edit ${selectedLead.name}`}
                   {panelType === 'location' && `Location: ${selectedLead.name}`}
                 </h2>
@@ -1330,6 +1414,12 @@ OR JSON format:
                     {selectedLead.phone}
                   </p>
                 )}
+                {panelType === 'email' && selectedLead.email && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    <Mail className="h-3 w-3 inline mr-1" />
+                    {selectedLead.email}
+                  </p>
+                )}
                 {panelType === 'edit' && selectedLead.category && (
                   <Badge variant="secondary" className="mt-1">{selectedLead.category}</Badge>
                 )}
@@ -1337,7 +1427,7 @@ OR JSON format:
               <button
                 onClick={closePanel}
                 className="p-2 hover:bg-secondary rounded-lg transition-colors"
-                disabled={isCalling}
+                disabled={isCalling || isSendingEmail || isSavingEdit}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1543,31 +1633,83 @@ OR JSON format:
               {panelType === 'edit' && (
                 <>
                   <FormGroup label="Business Name">
-                    <Input defaultValue={selectedLead.name} />
+                    <Input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      disabled={isSavingEdit}
+                    />
                   </FormGroup>
                   <FormGroup label="Phone">
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input defaultValue={selectedLead.phone} className="pl-10" />
+                      <Input
+                        value={editPhone}
+                        onChange={(e) => setEditPhone(e.target.value)}
+                        className="pl-10"
+                        disabled={isSavingEdit}
+                      />
+                    </div>
+                  </FormGroup>
+                  <FormGroup label="Email">
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={editEmail}
+                        onChange={(e) => setEditEmail(e.target.value)}
+                        className="pl-10"
+                        type="email"
+                        placeholder="contact@business.com"
+                        disabled={isSavingEdit}
+                      />
                     </div>
                   </FormGroup>
                   <FormGroup label="Category">
-                    <Input defaultValue={selectedLead.category || ''} />
+                    <Input
+                      value={editCategory}
+                      onChange={(e) => setEditCategory(e.target.value)}
+                      disabled={isSavingEdit}
+                    />
+                  </FormGroup>
+                  <FormGroup label="City">
+                    <div className="relative">
+                      <MapPinned className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={editCity}
+                        onChange={(e) => setEditCity(e.target.value)}
+                        className="pl-10"
+                        placeholder="e.g., Dublin"
+                        disabled={isSavingEdit}
+                      />
+                    </div>
                   </FormGroup>
                   <FormGroup label="Address">
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input defaultValue={selectedLead.address || ''} className="pl-10" />
+                      <Input
+                        value={editAddress}
+                        onChange={(e) => setEditAddress(e.target.value)}
+                        className="pl-10"
+                        disabled={isSavingEdit}
+                      />
                     </div>
                   </FormGroup>
                   <FormGroup label="Website">
                     <div className="relative">
                       <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input defaultValue={selectedLead.website || ''} className="pl-10" />
+                      <Input
+                        value={editWebsite}
+                        onChange={(e) => setEditWebsite(e.target.value)}
+                        className="pl-10"
+                        disabled={isSavingEdit}
+                      />
                     </div>
                   </FormGroup>
                   <FormGroup label="Status">
-                    <Select defaultValue={selectedLead.status || 'new'}>
+                    <Select
+                      value={editStatus}
+                      onChange={(e) => setEditStatus(e.target.value)}
+                      disabled={isSavingEdit}
+                    >
                       <option value="new">New</option>
                       <option value="contacted">Contacted</option>
                       <option value="interested">Interested</option>
@@ -1632,6 +1774,207 @@ OR JSON format:
                   </div>
                 </>
               )}
+
+              {/* EMAIL PANEL */}
+              {panelType === 'email' && (
+                <>
+                  {emailStatus && (
+                    <Alert variant={emailStatus.includes('Error') ? 'destructive' : emailStatus.includes('✅') ? 'success' : 'info'}>
+                      <AlertDescription>{emailStatus}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {!selectedLead.email && (
+                    <Alert variant="warning">
+                      <AlertDescription>
+                        This lead doesn't have an email address. Please add one in the Edit panel first.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Lead Info Card */}
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50 rounded-lg p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5 text-blue-600" />
+                      <h3 className="font-semibold">{selectedLead.name}</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {selectedLead.category && (
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Tag className="h-3 w-3" />
+                          {selectedLead.category}
+                        </div>
+                      )}
+                      {(selectedLead.address || selectedLead.city) && (
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <MapPin className="h-3 w-3" />
+                          {selectedLead.city || selectedLead.address}
+                        </div>
+                      )}
+                      {selectedLead.rating && (
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Star className="h-3 w-3 text-yellow-500" />
+                          {selectedLead.rating} ({selectedLead.review_count || 0} reviews)
+                        </div>
+                      )}
+                      {selectedLead.website && (
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Globe className="h-3 w-3" />
+                          <a href={selectedLead.website} target="_blank" rel="noopener noreferrer" className="hover:text-primary truncate">
+                            {selectedLead.website.replace(/https?:\/\//, '')}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Product/Context fields */}
+                  <FormGroup label="Your Product / Service">
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Textarea
+                          value={productIdea}
+                          onChange={(e) => setProductIdea(e.target.value)}
+                          placeholder="e.g., We're building an AI assistant that helps restaurants manage reservations..."
+                          rows={3}
+                          className="pl-10"
+                        />
+                      </div>
+                      <AIGenerator
+                        type="product"
+                        placeholder="Describe your product in simple words..."
+                        onGenerate={setProductIdea}
+                      />
+                    </div>
+                  </FormGroup>
+
+                  <FormGroup label="Company Context (optional)">
+                    <div className="relative">
+                      <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Textarea
+                        value={companyContext}
+                        onChange={(e) => setCompanyContext(e.target.value)}
+                        placeholder="e.g., We are a startup focused on hospitality tech..."
+                        rows={2}
+                        className="pl-10"
+                      />
+                    </div>
+                  </FormGroup>
+
+                  {/* Generate Email Button */}
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      if (!productIdea.trim()) {
+                        setEmailStatus('Error: Please describe your product/service first');
+                        return;
+                      }
+                      setIsGeneratingEmail(true);
+                      setEmailStatus('Generating personalized email with AI...');
+                      try {
+                        const result = await emailApi.generateColdEmail({
+                          lead: selectedLead,
+                          productIdea: productIdea.trim(),
+                          companyContext: companyContext.trim() || undefined,
+                          senderName: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Your Name',
+                        });
+                        if (result.success && result.email) {
+                          setEmailSubject(result.email.subject);
+                          setEmailBody(result.email.body);
+                          setEmailStatus('');
+                        } else {
+                          setEmailStatus('Error: Failed to generate email');
+                        }
+                      } catch (err) {
+                        setEmailStatus(`Error: ${err.message}`);
+                      } finally {
+                        setIsGeneratingEmail(false);
+                      }
+                    }}
+                    disabled={isGeneratingEmail || !productIdea.trim()}
+                    className="w-full gap-2 border-primary/20 hover:bg-primary/5 text-primary"
+                  >
+                    {isGeneratingEmail ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Generating with AI...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="h-4 w-4" />
+                        Generate Cold Email with AI
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Email Subject */}
+                  <FormGroup label="Email Subject">
+                    <Input
+                      value={emailSubject}
+                      onChange={(e) => setEmailSubject(e.target.value)}
+                      placeholder="Enter email subject..."
+                      disabled={isGeneratingEmail}
+                    />
+                  </FormGroup>
+
+                  {/* Email Body */}
+                  <FormGroup label="Email Body">
+                    <Textarea
+                      value={emailBody}
+                      onChange={(e) => setEmailBody(e.target.value)}
+                      placeholder="Enter email body..."
+                      rows={8}
+                      disabled={isGeneratingEmail}
+                      className="font-normal"
+                    />
+                  </FormGroup>
+
+                  {/* Regenerate button if email exists */}
+                  {emailBody && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={async () => {
+                        setIsGeneratingEmail(true);
+                        setEmailStatus('Regenerating email...');
+                        try {
+                          const result = await emailApi.generateColdEmail({
+                            lead: selectedLead,
+                            productIdea: productIdea.trim(),
+                            companyContext: companyContext.trim() || undefined,
+                            senderName: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Your Name',
+                          });
+                          if (result.success && result.email) {
+                            setEmailSubject(result.email.subject);
+                            setEmailBody(result.email.body);
+                            setEmailStatus('');
+                          }
+                        } catch (err) {
+                          setEmailStatus(`Error: ${err.message}`);
+                        } finally {
+                          setIsGeneratingEmail(false);
+                        }
+                      }}
+                      disabled={isGeneratingEmail}
+                      className="gap-2 text-muted-foreground hover:text-primary"
+                    >
+                      <RefreshCw className={cn("h-4 w-4", isGeneratingEmail && "animate-spin")} />
+                      Regenerate
+                    </Button>
+                  )}
+
+                  <div className="bg-secondary/50 rounded-lg p-4 text-sm">
+                    <p className="font-medium mb-2">The AI will:</p>
+                    <ul className="space-y-1 text-muted-foreground">
+                      <li>• Research the lead's business based on available info</li>
+                      <li>• Create a personalized opening line</li>
+                      <li>• Craft a compelling value proposition</li>
+                      <li>• Include a clear call-to-action</li>
+                    </ul>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Footer */}
@@ -1639,7 +1982,7 @@ OR JSON format:
               <Button
                 variant="outline"
                 onClick={closePanel}
-                disabled={isCalling}
+                disabled={isCalling || isSendingEmail || isSavingEdit}
                 className="flex-1"
               >
                 {panelType === 'location' ? 'Close' : 'Cancel'}
@@ -1674,10 +2017,102 @@ OR JSON format:
                   )}
                 </Button>
               )}
+              {panelType === 'email' && (
+                <Button
+                  variant="gradient"
+                  onClick={async () => {
+                    if (!selectedLead.email) {
+                      setEmailStatus('Error: This lead has no email address');
+                      return;
+                    }
+                    if (!emailSubject.trim() || !emailBody.trim()) {
+                      setEmailStatus('Error: Please generate or write an email first');
+                      return;
+                    }
+                    setIsSendingEmail(true);
+                    setEmailStatus('Sending email...');
+                    try {
+                      const result = await emailApi.sendColdEmail({
+                        leadId: selectedLead.id,
+                        toEmail: selectedLead.email,
+                        toName: selectedLead.name,
+                        subject: emailSubject.trim(),
+                        body: emailBody.trim(),
+                        senderName: user?.user_metadata?.full_name || user?.email?.split('@')[0] || undefined,
+                        senderCompany: companyContext.trim() ? companyContext.split('.')[0] : undefined,
+                        userId: user?.id,
+                      });
+                      if (result.success) {
+                        setEmailStatus('✅ Email sent successfully!');
+                        setSuccess(`Cold email sent to ${selectedLead.email}`);
+                        setTimeout(() => {
+                          closePanel();
+                          loadLeads(); // Reload to update status
+                        }, 1500);
+                      } else {
+                        setEmailStatus(`Error: ${result.error || 'Failed to send email'}`);
+                      }
+                    } catch (err) {
+                      setEmailStatus(`Error: ${err.message}`);
+                    } finally {
+                      setIsSendingEmail(false);
+                    }
+                  }}
+                  disabled={isSendingEmail || !selectedLead.email || !emailSubject.trim() || !emailBody.trim()}
+                  className="flex-1"
+                >
+                  {isSendingEmail ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      Send Email
+                    </>
+                  )}
+                </Button>
+              )}
               {panelType === 'edit' && (
-                <Button variant="gradient" className="flex-1">
-                  <Pencil className="h-4 w-4" />
-                  Save Changes
+                <Button
+                  variant="gradient"
+                  className="flex-1"
+                  disabled={isSavingEdit || !editName.trim() || !editPhone.trim()}
+                  onClick={async () => {
+                    setIsSavingEdit(true);
+                    try {
+                      await supabaseApi.updateLead(selectedLead.id, {
+                        name: editName.trim(),
+                        phone: editPhone.trim(),
+                        email: editEmail.trim() || null,
+                        category: editCategory.trim() || null,
+                        address: editAddress.trim() || null,
+                        website: editWebsite.trim() || null,
+                        status: editStatus,
+                        city: editCity.trim() || null,
+                      });
+                      setSuccess(`Lead "${editName}" updated successfully!`);
+                      closePanel();
+                      loadLeads(); // Reload to show updated data
+                    } catch (err) {
+                      setError(`Failed to save changes: ${err.message}`);
+                    } finally {
+                      setIsSavingEdit(false);
+                    }
+                  }}
+                >
+                  {isSavingEdit ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Pencil className="h-4 w-4" />
+                      Save Changes
+                    </>
+                  )}
                 </Button>
               )}
             </div>
