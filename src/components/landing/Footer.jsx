@@ -1,5 +1,3 @@
-import { Phone } from "lucide-react";
-
 const footerLinks = {
   product: [
     { label: "Features", href: "#features" },
@@ -33,9 +31,11 @@ const Footer = () => {
           {/* Logo & Description */}
           <div className="col-span-2">
             <a href="/" className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg">
-                <Phone className="h-5 w-5 text-white" />
-              </div>
+              <img
+                src="/logo.svg"
+                alt="ValidateCall Logo"
+                className="h-10 w-10"
+              />
               <span className="font-display text-xl font-bold tracking-tight">
                 Validate<span className="text-gradient">Call</span>
               </span>

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff"/>
+      <stop offset="100%" style="stop-color:#f1f5f9"/>
+    </linearGradient>
+    <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="50%" style="stop-color:#1e40af"/>
+      <stop offset="100%" style="stop-color:#1e3a8a"/>
+    </linearGradient>
+    <linearGradient id="glowGradient" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.2"/>
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+
+  <!-- Grid Pattern -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e2e8f0" stroke-width="0.5"/>
+  </pattern>
+  <rect width="1200" height="630" fill="url(#grid)" opacity="0.5"/>
+
+  <!-- Glow Effect -->
+  <ellipse cx="600" cy="315" rx="500" ry="300" fill="url(#glowGradient)"/>
+
+  <!-- Logo Icon -->
+  <g transform="translate(100, 215)">
+    <circle cx="100" cy="100" r="90" fill="url(#brandGradient)"/>
+    <circle cx="100" cy="100" r="75" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+    <path d="M75 55c0-4.4 3.6-8 8-8h34c4.4 0 8 3.6 8 8v90c0 4.4-3.6 8-8 8H83c-4.4 0-8-3.6-8-8V55z" fill="white"/>
+    <rect x="83" y="63" width="34" height="60" rx="2" fill="url(#brandGradient)" opacity="0.25"/>
+    <path d="M133 80c6 6 10 14 10 22s-4 16-10 22" stroke="white" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.7"/>
+    <path d="M145 68c10 10 16 24 16 36s-6 26-16 36" stroke="white" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.5"/>
+    <circle cx="150" cy="150" r="32" fill="#059669"/>
+    <path d="M136 150l10 10 18-20" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+
+  <!-- Text Content -->
+  <text x="340" y="260" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#0f172a">
+    Validate<tspan fill="url(#brandGradient)">Call</tspan>
+  </text>
+
+  <text x="340" y="340" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="500" fill="#64748b">
+    AI-Powered Market Research Calls
+  </text>
+
+  <!-- Feature Pills -->
+  <g transform="translate(340, 380)">
+    <rect x="0" y="0" width="180" height="44" rx="22" fill="#3b82f6" opacity="0.1"/>
+    <text x="90" y="29" font-family="system-ui, sans-serif" font-size="18" font-weight="500" fill="#3b82f6" text-anchor="middle">100+ Industries</text>
+  </g>
+  <g transform="translate(540, 380)">
+    <rect x="0" y="0" width="180" height="44" rx="22" fill="#3b82f6" opacity="0.1"/>
+    <text x="90" y="29" font-family="system-ui, sans-serif" font-size="18" font-weight="500" fill="#3b82f6" text-anchor="middle">50M+ Leads</text>
+  </g>
+  <g transform="translate(740, 380)">
+    <rect x="0" y="0" width="180" height="44" rx="22" fill="#3b82f6" opacity="0.1"/>
+    <text x="90" y="29" font-family="system-ui, sans-serif" font-size="18" font-weight="500" fill="#3b82f6" text-anchor="middle">30+ Languages</text>
+  </g>
+
+  <!-- Bottom Brand Bar -->
+  <rect x="0" y="580" width="1200" height="50" fill="url(#brandGradient)"/>
+  <text x="600" y="612" font-family="system-ui, sans-serif" font-size="20" font-weight="500" fill="white" text-anchor="middle">validatecall.com</text>
+</svg>

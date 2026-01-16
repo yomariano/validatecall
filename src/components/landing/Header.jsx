@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Phone, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -14,9 +14,11 @@ const Header = () => {
         <div className="flex h-20 items-center justify-between">
           {/* Logo */}
           <a href="/" className="flex items-center gap-3 group">
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg group-hover:shadow-primary/30 transition-shadow">
-              <Phone className="h-5 w-5 text-white" />
-            </div>
+            <img
+              src="/logo.svg"
+              alt="ValidateCall Logo"
+              className="h-10 w-10 group-hover:scale-105 transition-transform"
+            />
             <span className="font-display text-xl font-bold tracking-tight">
               Validate<span className="text-gradient">Call</span>
             </span>
