@@ -217,6 +217,15 @@ function Leads() {
   const [editCity, setEditCity] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
+  // Column search filters
+  const [searchName, setSearchName] = useState('');
+  const [searchPhone, setSearchPhone] = useState('');
+  const [searchEmail, setSearchEmail] = useState('');
+  const [searchCity, setSearchCity] = useState('');
+  const [searchIndustry, setSearchIndustry] = useState('');
+  const [searchRatingMin, setSearchRatingMin] = useState('');
+  const [searchStatus, setSearchStatus] = useState('');
+
   // Debounce ref to prevent rapid double-clicks on search
   const scrapeInProgressRef = useRef(false);
 
@@ -230,7 +239,7 @@ function Leads() {
   const filteredLeads = useMemo(() => {
     let filtered = allLeads;
 
-    // Status filter
+    // Status filter (header tabs)
     if (filter !== 'all') {
       filtered = filtered.filter(l => l.status === filter);
     }
@@ -244,15 +253,69 @@ function Leads() {
       );
     }
 
-    // Location filter
+    // Location filter (dropdown)
     if (locationFilter !== 'all') {
       filtered = filtered.filter(l =>
         l.search_location === locationFilter || l.city === locationFilter
       );
     }
 
+    // Column-specific search filters
+    if (searchName.trim()) {
+      const term = searchName.toLowerCase().trim();
+      filtered = filtered.filter(l =>
+        l.name?.toLowerCase().includes(term) ||
+        l.address?.toLowerCase().includes(term)
+      );
+    }
+
+    if (searchPhone.trim()) {
+      const term = searchPhone.trim().replace(/[^0-9+]/g, '');
+      filtered = filtered.filter(l =>
+        l.phone?.replace(/[^0-9+]/g, '').includes(term)
+      );
+    }
+
+    if (searchEmail.trim()) {
+      const term = searchEmail.toLowerCase().trim();
+      filtered = filtered.filter(l =>
+        l.email?.toLowerCase().includes(term)
+      );
+    }
+
+    if (searchCity.trim()) {
+      const term = searchCity.toLowerCase().trim();
+      filtered = filtered.filter(l =>
+        l.city?.toLowerCase().includes(term) ||
+        l.search_location?.toLowerCase().includes(term)
+      );
+    }
+
+    if (searchIndustry.trim()) {
+      const term = searchIndustry.toLowerCase().trim();
+      filtered = filtered.filter(l =>
+        l.category?.toLowerCase().includes(term)
+      );
+    }
+
+    if (searchRatingMin.trim()) {
+      const minRating = parseFloat(searchRatingMin);
+      if (!isNaN(minRating)) {
+        filtered = filtered.filter(l =>
+          l.rating && l.rating >= minRating
+        );
+      }
+    }
+
+    if (searchStatus.trim()) {
+      const term = searchStatus.toLowerCase().trim();
+      filtered = filtered.filter(l =>
+        l.status?.toLowerCase().includes(term)
+      );
+    }
+
     return filtered;
-  }, [allLeads, filter, categoryFilter, locationFilter]);
+  }, [allLeads, filter, categoryFilter, locationFilter, searchName, searchPhone, searchEmail, searchCity, searchIndustry, searchRatingMin, searchStatus]);
 
   // Use filteredLeads instead of leads state
   const leads = filteredLeads;
@@ -1211,11 +1274,22 @@ OR JSON format:
                 </Button>
               </div>
 
-              {(filter !== 'all' || categoryFilter !== 'all' || locationFilter !== 'all') && (
+              {(filter !== 'all' || categoryFilter !== 'all' || locationFilter !== 'all' || searchName || searchPhone || searchEmail || searchCity || searchIndustry || searchRatingMin || searchStatus) && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => { setFilter('all'); setCategoryFilter('all'); setLocationFilter('all'); }}
+                  onClick={() => {
+                    setFilter('all');
+                    setCategoryFilter('all');
+                    setLocationFilter('all');
+                    setSearchName('');
+                    setSearchPhone('');
+                    setSearchEmail('');
+                    setSearchCity('');
+                    setSearchIndustry('');
+                    setSearchRatingMin('');
+                    setSearchStatus('');
+                  }}
                   className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
                 >
                   <X className="h-3 w-3 mr-1" />
@@ -1270,6 +1344,78 @@ OR JSON format:
                       <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Rating</TableHead>
                       <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Status</TableHead>
                       <TableHead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-right pr-6">Management</TableHead>
+                    </TableRow>
+                    {/* Column Search Row */}
+                    <TableRow className="border-border/50 hover:bg-transparent bg-muted/10">
+                      <TableHead className="w-14 py-2">
+                        <Search className="h-3.5 w-3.5 text-muted-foreground mx-auto" />
+                      </TableHead>
+                      <TableHead className="py-2">
+                        <Input
+                          value={searchName}
+                          onChange={(e) => setSearchName(e.target.value)}
+                          placeholder="Search name..."
+                          className="h-7 text-xs bg-white/50 border-white/30 rounded-lg"
+                        />
+                      </TableHead>
+                      <TableHead className="py-2">
+                        <Input
+                          value={searchPhone}
+                          onChange={(e) => setSearchPhone(e.target.value)}
+                          placeholder="Search phone..."
+                          className="h-7 text-xs bg-white/50 border-white/30 rounded-lg"
+                        />
+                      </TableHead>
+                      <TableHead className="py-2">
+                        <Input
+                          value={searchEmail}
+                          onChange={(e) => setSearchEmail(e.target.value)}
+                          placeholder="Search email..."
+                          className="h-7 text-xs bg-white/50 border-white/30 rounded-lg"
+                        />
+                      </TableHead>
+                      <TableHead className="py-2">
+                        <Input
+                          value={searchCity}
+                          onChange={(e) => setSearchCity(e.target.value)}
+                          placeholder="Search city..."
+                          className="h-7 text-xs bg-white/50 border-white/30 rounded-lg"
+                        />
+                      </TableHead>
+                      <TableHead className="py-2">
+                        <Input
+                          value={searchIndustry}
+                          onChange={(e) => setSearchIndustry(e.target.value)}
+                          placeholder="Search industry..."
+                          className="h-7 text-xs bg-white/50 border-white/30 rounded-lg"
+                        />
+                      </TableHead>
+                      <TableHead className="py-2">
+                        <Input
+                          value={searchRatingMin}
+                          onChange={(e) => setSearchRatingMin(e.target.value)}
+                          placeholder="Min ★"
+                          type="number"
+                          min="0"
+                          max="5"
+                          step="0.1"
+                          className="h-7 text-xs bg-white/50 border-white/30 rounded-lg w-16"
+                        />
+                      </TableHead>
+                      <TableHead className="py-2">
+                        <Select
+                          value={searchStatus}
+                          onChange={(e) => setSearchStatus(e.target.value)}
+                          className="h-7 text-xs bg-white/50 border-white/30 rounded-lg"
+                        >
+                          <option value="">All</option>
+                          <option value="new">New</option>
+                          <option value="contacted">Contacted</option>
+                          <option value="interested">Interested</option>
+                          <option value="rejected">Rejected</option>
+                        </Select>
+                      </TableHead>
+                      <TableHead className="py-2 pr-6"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

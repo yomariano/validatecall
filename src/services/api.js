@@ -464,10 +464,48 @@ export const emailApi = {
         }),
 
     // Send cold email to a lead
-    sendColdEmail: ({ leadId, toEmail, toName, subject, body, senderName, senderCompany, userId }) =>
+    sendColdEmail: ({ leadId, toEmail, toName, subject, body, senderName, senderEmail, senderCompany, userId }) =>
         apiRequest('/api/email/send-cold-email', {
             method: 'POST',
-            body: JSON.stringify({ leadId, toEmail, toName, subject, body, senderName, senderCompany, userId }),
+            body: JSON.stringify({ leadId, toEmail, toName, subject, body, senderName, senderEmail, senderCompany, userId }),
+        }),
+};
+
+// =============================================
+// DOMAINS - Custom Email Domain Management
+// =============================================
+
+export const domainsApi = {
+    // Get domain service status
+    getStatus: () => apiRequest('/api/domains/status'),
+
+    // List all domains for a user
+    list: (userId) => apiRequest(`/api/domains?userId=${userId}`),
+
+    // Get only verified domains (for sender dropdown)
+    getVerified: (userId) => apiRequest(`/api/domains/verified?userId=${userId}`),
+
+    // Get a specific domain by ID
+    get: (userId, domainId) => apiRequest(`/api/domains/${domainId}?userId=${userId}`),
+
+    // Create a new domain for verification
+    create: (userId, domain) =>
+        apiRequest('/api/domains', {
+            method: 'POST',
+            body: JSON.stringify({ userId, domain }),
+        }),
+
+    // Trigger verification check for a domain
+    verify: (userId, domainId) =>
+        apiRequest(`/api/domains/${domainId}/verify`, {
+            method: 'POST',
+            body: JSON.stringify({ userId }),
+        }),
+
+    // Delete a domain
+    delete: (userId, domainId) =>
+        apiRequest(`/api/domains/${domainId}?userId=${userId}`, {
+            method: 'DELETE',
         }),
 };
 
@@ -529,6 +567,7 @@ export default {
     claudeApi,
     usageApi,
     emailApi,
+    domainsApi,
     isLeadsConfigured,
     isSupabaseConfigured,
     isVapiConfigured,

@@ -15,7 +15,8 @@ import {
   CheckCircle2,
   HelpCircle,
   Sparkles,
-  Bot
+  Bot,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +32,7 @@ const navItems = [
   { to: '/campaigns', icon: PhoneCall, label: 'Campaigns', step: 2 },
   { to: '/history', icon: BarChart3, label: 'Analytics' },
   { to: '/billing', icon: CreditCard, label: 'Plans & Billing' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 function Sidebar({ onShowWizard }) {
