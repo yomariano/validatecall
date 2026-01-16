@@ -56,14 +56,31 @@ function UsageMeter({
 /**
  * Compact usage display for sidebar
  */
-export function UsageDisplay({ leadsUsed, leadsLimit, callsUsed, callsLimit }) {
+export function UsageDisplay({ leadsUsed, leadsLimit, callsUsed, callsLimit, isFreeTier = true, planId }) {
+    // Determine plan display info
+    const getPlanInfo = () => {
+        if (isFreeTier) return { label: 'Free Plan', badge: 'F', color: 'bg-primary/10', textColor: 'text-primary' };
+
+        // Map plan IDs to display names
+        const planMap = {
+            lite: { label: 'Lite Plan', badge: 'L', color: 'bg-blue-500/10', textColor: 'text-blue-500' },
+            starter: { label: 'Starter Plan', badge: 'S', color: 'bg-green-500/10', textColor: 'text-green-500' },
+            pro: { label: 'Pro Plan', badge: 'P', color: 'bg-purple-500/10', textColor: 'text-purple-500' },
+            enterprise: { label: 'Enterprise', badge: 'E', color: 'bg-orange-500/10', textColor: 'text-orange-500' },
+        };
+
+        return planMap[planId] || { label: 'Pro Plan', badge: 'P', color: 'bg-purple-500/10', textColor: 'text-purple-500' };
+    };
+
+    const planInfo = getPlanInfo();
+
     return (
         <div className="space-y-3 p-3 bg-secondary/50 rounded-lg border border-border">
             <div className="flex items-center gap-2">
-                <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/10">
-                    <span className="text-[10px] font-bold text-primary">F</span>
+                <div className={cn('flex h-5 w-5 items-center justify-center rounded', planInfo.color)}>
+                    <span className={cn('text-[10px] font-bold', planInfo.textColor)}>{planInfo.badge}</span>
                 </div>
-                <span className="text-xs font-medium text-muted-foreground">Free Plan</span>
+                <span className="text-xs font-medium text-muted-foreground">{planInfo.label}</span>
             </div>
             <UsageMeter
                 used={leadsUsed}

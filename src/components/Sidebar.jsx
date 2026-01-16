@@ -35,7 +35,7 @@ const navItems = [
 
 function Sidebar({ onShowWizard }) {
   const { user, isLocalhost, signOut } = useAuth();
-  const { isFreeTier, leadsUsed, leadsLimit, callsUsed, callsLimit } = useUsage();
+  const { isFreeTier, leadsUsed, leadsLimit, callsUsed, callsLimit, subscription } = useUsage();
   const { currentUserStep, hasCompletedOnboarding } = useOnboarding();
 
   const handleSignOut = async () => {
@@ -86,17 +86,17 @@ function Sidebar({ onShowWizard }) {
         </div>
       )}
 
-      {/* Free Tier Usage Display */}
-      {isFreeTier && (
-        <div className="mx-4 mt-4">
-          <UsageDisplay
-            leadsUsed={leadsUsed}
-            leadsLimit={leadsLimit}
-            callsUsed={callsUsed}
-            callsLimit={callsLimit}
-          />
-        </div>
-      )}
+      {/* Usage Display - shown for all users */}
+      <div className="mx-4 mt-4">
+        <UsageDisplay
+          leadsUsed={leadsUsed}
+          leadsLimit={leadsLimit}
+          callsUsed={callsUsed}
+          callsLimit={callsLimit}
+          isFreeTier={isFreeTier}
+          planId={subscription?.planId}
+        />
+      </div>
 
       {/* Workflow Section Label */}
       <div className="px-6 pt-6 pb-2">
