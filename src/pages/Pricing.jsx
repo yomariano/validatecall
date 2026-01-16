@@ -7,18 +7,18 @@ import { useAuth } from '../context/AuthContext';
 import { stripeApi } from '../services/api';
 import { PaywallEvents } from '@/lib/analytics';
 
-// Stripe Payment Links - TEST MODE (for development/testing)
-// Note: Switch to LIVE mode URLs when deploying to production
+// Stripe Payment Links - loaded from environment variables
+// Configure these in .env with VITE_STRIPE_TEST_*_LINK and VITE_STRIPE_LIVE_*_LINK
 const STRIPE_PAYMENT_LINKS = {
   test: {
-    lite: "https://buy.stripe.com/test_9B600ibzgboW0Na4I4fQI0d",
-    starter: "https://buy.stripe.com/test_5kQeVc7j00KibrOa2ofQI0e",
-    pro: "https://buy.stripe.com/test_7sYaEWcDk0KicvSdeAfQI0f",
+    lite: import.meta.env.VITE_STRIPE_TEST_LITE_LINK || '',
+    starter: import.meta.env.VITE_STRIPE_TEST_STARTER_LINK || '',
+    pro: import.meta.env.VITE_STRIPE_TEST_PRO_LINK || '',
   },
   live: {
-    lite: "https://buy.stripe.com/6oUaEWeLs9gO8fCgqMfQI07",
-    starter: "https://buy.stripe.com/28E6oG0UC78G53qb6sfQI08",
-    pro: "https://buy.stripe.com/00w4gyfPw64C53q4I4fQI09",
+    lite: import.meta.env.VITE_STRIPE_LIVE_LITE_LINK || '',
+    starter: import.meta.env.VITE_STRIPE_LIVE_STARTER_LINK || '',
+    pro: import.meta.env.VITE_STRIPE_LIVE_PRO_LINK || '',
   }
 };
 
