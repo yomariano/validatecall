@@ -109,26 +109,26 @@ function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Page Header - Enterprise Style */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-semibold text-foreground tracking-tight">
             Dashboard
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Welcome back. Here's your validation activity overview.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button asChild variant="secondary">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Button asChild variant="secondary" size="sm" className="flex-1 sm:flex-none">
             <Link to="/history" className="gap-2">
               <BarChart3 className="h-4 w-4" />
-              View Reports
+              <span className="hidden xs:inline">View</span> Reports
             </Link>
           </Button>
-          <Button asChild variant="default">
+          <Button asChild variant="default" size="sm" className="flex-1 sm:flex-none">
             <Link to="/campaigns" className="gap-2">
               <Zap className="h-4 w-4" />
-              New Campaign
+              <span className="hidden xs:inline">New</span> Campaign
             </Link>
           </Button>
         </div>
@@ -141,7 +141,7 @@ function Dashboard() {
           <AlertTitle>Complete Setup</AlertTitle>
           <AlertDescription>
             <p>Configure the following services in your <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">.env</code> file:</p>
-            <div className="mt-3 grid grid-cols-3 gap-4">
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div className={`flex items-center gap-2 ${configStatus.vapi ? 'text-muted-foreground' : ''}`}>
                 {configStatus.vapi ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Clock className="h-4 w-4" />}
                 <span className="text-sm">Vapi.ai API</span>

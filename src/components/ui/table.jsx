@@ -2,10 +2,10 @@ import * as React from 'react'
 import { cn } from '@/lib/utils'
 
 const Table = React.forwardRef(({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto rounded-lg border border-border">
+    <div className="relative w-full overflow-x-auto rounded-lg border border-border -mx-px">
         <table
             ref={ref}
-            className={cn('w-full caption-bottom text-sm', className)}
+            className={cn('w-full caption-bottom text-xs sm:text-sm min-w-[600px]', className)}
             {...props}
         />
     </div>
@@ -54,7 +54,7 @@ const TableHead = React.forwardRef(({ className, ...props }, ref) => (
     <th
         ref={ref}
         className={cn(
-            'h-12 px-4 text-left align-middle font-semibold text-muted-foreground tracking-wide text-xs uppercase [&:has([role=checkbox])]:pr-0',
+            'h-10 sm:h-12 px-2 sm:px-4 text-left align-middle font-semibold text-muted-foreground tracking-wide text-[10px] sm:text-xs uppercase [&:has([role=checkbox])]:pr-0 whitespace-nowrap',
             className
         )}
         {...props}
@@ -65,7 +65,7 @@ TableHead.displayName = 'TableHead'
 const TableCell = React.forwardRef(({ className, ...props }, ref) => (
     <td
         ref={ref}
-        className={cn('p-4 align-middle text-foreground [&:has([role=checkbox])]:pr-0', className)}
+        className={cn('p-2 sm:p-4 align-middle text-foreground [&:has([role=checkbox])]:pr-0', className)}
         {...props}
     />
 ))

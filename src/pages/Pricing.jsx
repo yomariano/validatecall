@@ -208,10 +208,10 @@ export default function Pricing() {
           </div>
         )}
 
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
           Simple, Transparent <span className="text-primary">Pricing</span>
         </h1>
-        <p className="text-muted-foreground max-w-xl mx-auto">
+        <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-4">
           Pay only for what you use. No hidden fees. Cancel anytime.
         </p>
       </div>

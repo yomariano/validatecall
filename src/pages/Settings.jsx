@@ -274,10 +274,10 @@ function Settings() {
     <div className="space-y-8 animate-slide-up">
       {/* Page Header */}
       <div className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
           Settings
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm sm:text-base text-muted-foreground">
           Manage your account settings and integrations
         </p>
       </div>
@@ -307,7 +307,7 @@ function Settings() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Add Domain Form */}
-          <form onSubmit={handleAddDomain} className="flex gap-3">
+          <form onSubmit={handleAddDomain} className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <Input
                 value={newDomain}
@@ -316,7 +316,7 @@ function Settings() {
                 disabled={isAdding}
               />
             </div>
-            <Button type="submit" disabled={isAdding || !newDomain.trim()}>
+            <Button type="submit" disabled={isAdding || !newDomain.trim()} className="w-full sm:w-auto">
               {isAdding ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />

@@ -72,26 +72,26 @@ function History() {
     <div className="space-y-8 animate-slide-up">
       {/* Page Header */}
       <div className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
           Call History
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm sm:text-base text-muted-foreground">
           View all past calls and their transcripts
         </p>
       </div>
 
       {/* Calls Table */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
           <CardTitle className="flex items-center gap-2">
             <HistoryIcon className="h-5 w-5 text-primary" />
             Calls ({calls.length})
           </CardTitle>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Select
               value={source}
               onChange={(e) => setSource(e.target.value)}
-              className="w-auto"
+              className="w-auto text-sm"
             >
               <option value="vapi">From Vapi</option>
               <option value="supabase">From Database</option>
@@ -103,7 +103,7 @@ function History() {
               disabled={isLoading}
             >
               <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
-              {isLoading ? 'Loading...' : 'Refresh'}
+              <span className="hidden sm:inline ml-1">{isLoading ? 'Loading...' : 'Refresh'}</span>
             </Button>
           </div>
         </CardHeader>
@@ -117,6 +117,7 @@ function History() {
               description="Start a campaign to make calls"
             />
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -161,6 +162,7 @@ function History() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

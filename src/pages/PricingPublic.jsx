@@ -131,11 +131,11 @@ const PricingPublic = () => {
               </div>
             )}
 
-            <h1 className="font-display text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-6">
               Simple, Transparent{" "}
               <span className="text-gradient">Pricing</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
               Pay only for what you use. No hidden fees. Cancel anytime.
             </p>
           </div>

@@ -448,17 +448,17 @@ Generate only the closing text, nothing else:`;
   return (
     <div className="space-y-8 animate-slide-up">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
             Voice Agents
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Configure AI voice agents for your calling campaigns
           </p>
         </div>
         {!isCreating && (
-          <Button onClick={handleCreate} variant="gradient">
+          <Button onClick={handleCreate} variant="gradient" className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Create Agent
           </Button>
@@ -884,32 +884,33 @@ Generate only the closing text, nothing else:`;
         ) : (
           <div className="grid gap-4">
             {agents.map((agent) => (
-              <Card key={agent.id} className="hover:border-primary/30 transition-colors">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                        <Bot className="h-6 w-6 text-primary" />
+              <Card key={agent.id} className="hover:border-primary/30 transition-colors overflow-hidden">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                    {/* Agent Info */}
+                    <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+                      <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                        <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                       </div>
-                      <div className="space-y-1">
-                        <h3 className="font-semibold text-lg">{agent.name}</h3>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <h3 className="font-semibold text-base sm:text-lg truncate">{agent.name}</h3>
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Volume2 className="h-3.5 w-3.5" />
-                            {getVoiceName(agent.voice?.provider, agent.voice?.voiceId)}
+                            <Volume2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
+                            <span className="truncate max-w-[100px] sm:max-w-none">{getVoiceName(agent.voice?.provider, agent.voice?.voiceId)}</span>
                           </span>
                           <span className="flex items-center gap-1">
-                            <Brain className="h-3.5 w-3.5" />
+                            <Brain className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
                             {agent.model?.model || 'gpt-4o-mini'}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-[10px] sm:text-xs">
                             {agent.voice?.provider || '11labs'}
                           </Badge>
                           <button
                             onClick={() => handleCopyId(agent.id)}
-                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                            className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground hover:text-foreground transition-colors"
                           >
                             <Copy className="h-3 w-3" />
                             Copy ID
@@ -918,12 +919,13 @@ Generate only the closing text, nothing else:`;
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 shrink-0">
                       <Button
                         variant="default"
                         size="sm"
                         onClick={() => setTestingAgent(agent)}
-                        className="gap-1.5"
+                        className="gap-1.5 flex-1 sm:flex-none"
                       >
                         <Phone className="h-4 w-4" />
                         Test
@@ -932,6 +934,7 @@ Generate only the closing text, nothing else:`;
                         variant="outline"
                         size="sm"
                         onClick={() => handleEdit(agent)}
+                        className="shrink-0"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -939,7 +942,7 @@ Generate only the closing text, nothing else:`;
                         variant="outline"
                         size="sm"
                         onClick={() => handleDelete(agent)}
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive shrink-0"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -950,7 +953,7 @@ Generate only the closing text, nothing else:`;
                   {agent.firstMessage && (
                     <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border">
                       <p className="text-xs text-muted-foreground mb-1">First Message:</p>
-                      <p className="text-sm italic">"{agent.firstMessage}"</p>
+                      <p className="text-sm italic line-clamp-2">"{agent.firstMessage}"</p>
                     </div>
                   )}
                 </CardContent>

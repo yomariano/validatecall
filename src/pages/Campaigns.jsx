@@ -924,7 +924,7 @@ function Campaigns() {
             )}
 
             {/* Leads Table - Same format as Leads page */}
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -1095,10 +1095,10 @@ function Campaigns() {
       <div className="space-y-8 animate-slide-up">
         {/* Page Header */}
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
             Campaigns
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Create and manage your calling campaigns
           </p>
         </div>
@@ -1185,7 +1185,7 @@ function Campaigns() {
                     </div>
 
                     {/* Status Filter Tabs */}
-                    <div className="flex gap-2 flex-wrap">
+                    <div className="flex gap-2 flex-wrap overflow-x-auto pb-2 -mx-1 px-1">
                       {[
                         { key: 'all', label: 'All', count: stats.total },
                         { key: 'new', label: 'New', count: stats.new },
@@ -1197,6 +1197,7 @@ function Campaigns() {
                           variant={statusFilter === key ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => setStatusFilter(key)}
+                          className="shrink-0 text-xs sm:text-sm"
                         >
                           {label} ({count})
                         </Button>
@@ -1204,13 +1205,13 @@ function Campaigns() {
                     </div>
 
                     {/* Dropdown Filters */}
-                    <div className="flex gap-4 flex-wrap">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="flex items-center gap-2">
-                        <Filter className="h-4 w-4 text-muted-foreground" />
+                        <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
                         <Select
                           value={categoryFilter}
                           onChange={(e) => setCategoryFilter(e.target.value)}
-                          className="w-48 h-9 text-sm"
+                          className="w-full h-9 text-sm"
                         >
                           <option value="">All Industries ({leads.length})</option>
                           {categories.map((category) => (
@@ -1221,11 +1222,11 @@ function Campaigns() {
                         </Select>
                       </div>
                       <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
                         <Select
                           value={locationFilter}
                           onChange={(e) => setLocationFilter(e.target.value)}
-                          className="w-48 h-9 text-sm"
+                          className="w-full h-9 text-sm"
                         >
                           <option value="">All Locations</option>
                           {locations.map((loc) => (

@@ -40,7 +40,7 @@ function Login() {
                     <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-accent mb-4">
                         <Zap className="h-8 w-8 text-white" />
                     </div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                    <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
                         ValidateCall
                     </h1>
                     <p className="text-muted-foreground mt-2">

@@ -140,29 +140,29 @@ export default function Admin() {
         <div className="space-y-6 animate-slide-up">
             {/* Header */}
             <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                     <Shield className="h-5 w-5 text-primary" />
                 </div>
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
-                    <p className="text-muted-foreground">Manage marketing campaigns and automated emails</p>
+                <div className="min-w-0">
+                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">Admin Dashboard</h1>
+                    <p className="text-sm text-muted-foreground truncate">Manage marketing campaigns and automated emails</p>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 bg-muted/50 rounded-lg w-fit">
+            <div className="flex gap-1 p-1 bg-muted/50 rounded-lg w-full sm:w-fit overflow-x-auto">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
                             activeTab === tab.id
                                 ? 'bg-background text-foreground shadow-sm'
                                 : 'text-muted-foreground hover:text-foreground'
                         }`}
                     >
                         <tab.icon className="h-4 w-4" />
-                        {tab.label}
+                        <span className="hidden sm:inline">{tab.label}</span>
                     </button>
                 ))}
             </div>

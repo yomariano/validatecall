@@ -928,8 +928,8 @@ function Leads() {
       />
 
     <div className={cn(
-      "relative min-h-screen -mt-8 pt-8 px-4 overflow-hidden transition-all duration-300 ease-out",
-      panelOpen ? "mr-[420px]" : "mr-0"
+      "relative min-h-screen -mt-8 pt-8 px-2 sm:px-4 overflow-hidden transition-all duration-300 ease-out",
+      panelOpen ? "lg:mr-[420px]" : "mr-0"
     )}>
       {/* Background Decorations */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -948,7 +948,7 @@ function Leads() {
                 Lead Management
               </Badge>
             </div>
-            <h1 className="text-4xl font-black tracking-tight bg-linear-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight bg-linear-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
               Find Leads
             </h1>
             <p className="text-muted-foreground font-medium">
@@ -981,34 +981,35 @@ function Leads() {
 
         {/* Import Methods */}
         <Card className="border-white/20 bg-white/40 backdrop-blur-xl shadow-2xl animate-scale-in">
-          <CardHeader className="pb-4 border-b border-border/10">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth">
+          <CardHeader className="pb-4 border-b border-border/10 px-4 sm:px-6">
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth -mx-1 px-1">
               {[
-                { id: 'scrape', label: 'Scrape Google Maps', icon: Search },
-                { id: 'file', label: 'Upload File', icon: Upload },
-                { id: 'paste', label: 'Copy & Paste', icon: Copy }
+                { id: 'scrape', label: 'Scrape Google Maps', shortLabel: 'Scrape', icon: Search },
+                { id: 'file', label: 'Upload File', shortLabel: 'Upload', icon: Upload },
+                { id: 'paste', label: 'Copy & Paste', shortLabel: 'Paste', icon: Copy }
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setImportTab(tab.id)}
                   className={cn(
-                    "flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 relative shrink-0",
+                    "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-300 relative shrink-0",
                     importTab === tab.id
                       ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
                       : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
                   )}
                 >
                   <tab.icon className="h-4 w-4" />
-                  {tab.label}
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">{tab.shortLabel}</span>
                 </button>
               ))}
             </div>
           </CardHeader>
-          <CardContent className="space-y-6 pt-6">
+          <CardContent className="space-y-4 sm:space-y-6 pt-4 sm:pt-6 px-4 sm:px-6">
             {/* Scrape Tab */}
             {importTab === 'scrape' && (
               <>
-                <div className="grid md:grid-cols-2 gap-8">
+                <div className="grid md:grid-cols-2 gap-4 sm:gap-8">
                   <FormGroup label="Business Type / Keyword" className="space-y-2">
                     <div className="relative group">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none group-focus-within:text-primary transition-colors">
@@ -1038,7 +1039,7 @@ function Leads() {
                     </div>
                   </FormGroup>
                 </div>
-                <div className="grid md:grid-cols-2 gap-8 pt-4">
+                <div className="grid md:grid-cols-2 gap-4 sm:gap-8 pt-2 sm:pt-4">
                   <FormGroup label="Max Results" className="space-y-2">
                     <div className="relative">
                       <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1184,7 +1185,7 @@ OR JSON format:
         </Card>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8">
           {[
             { icon: Users, value: stats.total, label: "Total Prospecting", variant: "default", color: "text-primary", bg: "bg-primary/5" },
             { icon: UserPlus, value: stats.new, label: "New Leads", variant: "success", color: "text-success", bg: "bg-success/5" },
@@ -1193,13 +1194,13 @@ OR JSON format:
           ].map((stat, i) => (
             <Card key={i} className="group relative overflow-hidden border-white/20 bg-white/40 backdrop-blur-md hover:-translate-y-1 transition-all duration-300">
               <div className={cn("absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full blur-3xl opacity-20", stat.bg)} />
-              <CardContent className="pt-6 text-center">
-                <div className={cn("mx-auto mb-4 w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 group-hover:rotate-3", stat.bg, stat.color)}>
-                  <stat.icon className="h-6 w-6" />
+              <CardContent className="pt-4 sm:pt-6 text-center">
+                <div className={cn("mx-auto mb-2 sm:mb-4 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 group-hover:rotate-3", stat.bg, stat.color)}>
+                  <stat.icon className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
-                <div className="space-y-1">
-                  <p className="text-3xl font-black tracking-tighter">{stat.value}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{stat.label}</p>
+                <div className="space-y-0.5 sm:space-y-1">
+                  <p className="text-xl sm:text-3xl font-black tracking-tighter">{stat.value}</p>
+                  <p className="text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{stat.label}</p>
                 </div>
               </CardContent>
             </Card>
@@ -1208,26 +1209,29 @@ OR JSON format:
 
         {/* Leads Table */}
         <Card className="border-white/20 bg-white/20 backdrop-blur-md shadow-xl overflow-hidden">
-          <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 px-6 bg-white/10 border-b border-border/10">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <FileText className="h-4 w-4 text-primary" />
+          <CardHeader className="flex flex-col gap-4 pb-4 sm:pb-6 px-4 sm:px-6 bg-white/10 border-b border-border/10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                </div>
+                <CardTitle className="text-lg sm:text-xl font-bold">Leads <span className="text-primary/50 text-xs sm:text-sm font-black ml-1">({leads.length})</span></CardTitle>
               </div>
-              <CardTitle className="text-xl font-bold">Leads <span className="text-primary/50 text-sm font-black ml-1">({leads.length})</span></CardTitle>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 p-1 bg-white/20 rounded-xl border border-white/20">
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Status filter tabs - scrollable on mobile */}
+              <div className="flex items-center gap-1.5 p-1 bg-white/20 rounded-xl border border-white/20 overflow-x-auto w-full sm:w-auto">
                 {[
-                  { id: 'all', label: 'All Status' },
+                  { id: 'all', label: 'All' },
                   { id: 'new', label: 'New' },
-                  { id: 'contacted', label: 'Contacted' },
-                  { id: 'interested', label: 'Interested' }
+                  { id: 'contacted', label: 'Called' },
+                  { id: 'interested', label: 'Hot' }
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setFilter(tab.id)}
                     className={cn(
-                      "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                      "px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0",
                       filter === tab.id
                         ? "bg-white shadow-sm text-primary"
                         : "text-muted-foreground hover:bg-white/10"
@@ -1238,15 +1242,15 @@ OR JSON format:
                 ))}
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="relative">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-none">
                   <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="pl-9 h-10 w-44 text-xs bg-white/20 border-white/20 rounded-xl"
+                    className="pl-9 h-10 w-full sm:w-36 text-xs bg-white/20 border-white/20 rounded-xl"
                   >
-                    <option value="all">Industries</option>
+                    <option value="all">All Industries</option>
                     {categories.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
@@ -1257,18 +1261,18 @@ OR JSON format:
                   size="sm"
                   onClick={handleClassifyAll}
                   disabled={isClassifying || allLeads.length === 0}
-                  className="h-10 gap-2 text-xs border-primary/20 hover:bg-primary/5 text-primary rounded-xl"
+                  className="h-10 gap-2 text-xs border-primary/20 hover:bg-primary/5 text-primary rounded-xl w-full sm:w-auto"
                   title="Re-classify all leads into standardized industries using AI"
                 >
                   {isClassifying ? (
                     <>
                       <Loader2 className="h-3 w-3 animate-spin" />
-                      {classifyProgress || 'Classifying...'}
+                      <span className="truncate">{classifyProgress || 'Classifying...'}</span>
                     </>
                   ) : (
                     <>
                       <Wand2 className="h-3 w-3" />
-                      Classify All
+                      Classify
                     </>
                   )}
                 </Button>
@@ -1542,9 +1546,16 @@ OR JSON format:
           </CardContent>
         </Card>
 
+        {/* Side Panel Overlay (mobile) */}
+        {panelOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+            onClick={closePanel}
+          />
+        )}
         {/* Side Panel */}
         {panelOpen && selectedLead && (
-          <div className="fixed right-0 top-0 h-full w-[420px] z-40 bg-card border-l border-border shadow-2xl animate-slide-in-right overflow-hidden flex flex-col">
+          <div className="fixed right-0 top-0 h-full w-full sm:w-[420px] z-40 bg-card border-l border-border shadow-2xl animate-slide-in-right overflow-hidden flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
               <div>
