@@ -46,7 +46,7 @@ const Header = () => {
               Sign In
             </Button>
             <Button variant="hero" onClick={signInWithGoogle}>
-              Start Free Trial
+              Get started
             </Button>
           </div>
 
@@ -80,7 +80,7 @@ const Header = () => {
                   Sign In
                 </Button>
                 <Button variant="hero" className="w-full" onClick={signInWithGoogle}>
-                  Start Free Trial
+                  Get started
                 </Button>
               </div>
             </nav>

@@ -16,6 +16,7 @@ import Agents from './pages/Agents';
 import History from './pages/History';
 import Pricing from './pages/Pricing';
 import Settings from './pages/Settings';
+import Admin from './pages/Admin';
 import { trackRouteChange } from '@/lib/analytics';
 import './App.css';
 
@@ -61,6 +62,7 @@ function App() {
             <Route path="/history" element={<ProtectedLayout><History /></ProtectedLayout>} />
             <Route path="/billing" element={<ProtectedLayout><Pricing /></ProtectedLayout>} />
             <Route path="/settings" element={<ProtectedLayout><Settings /></ProtectedLayout>} />
+            <Route path="/admin" element={<ProtectedLayout><Admin /></ProtectedLayout>} />
 
             {/* Catch-all redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -9,12 +9,12 @@ const plans = [
     price: 197,
     calls: 100,
     costPerCall: 1.97,
-    description: "Perfect for testing and small-scale validation",
+    description: "Perfect for testing outbound and getting started",
     features: [
-      "100 AI research calls/month",
-      "Basic analytics dashboard",
-      "5 languages supported",
+      "100 AI calls/month",
       "Lead database access",
+      "Call recordings & transcripts",
+      "Basic analytics dashboard",
     ],
     popular: false,
   },
@@ -25,11 +25,11 @@ const plans = [
     costPerCall: 0.99,
     description: "Most popular for growing businesses",
     features: [
-      "500 AI research calls/month",
-      "Advanced analytics & insights",
-      "15 languages supported",
-      "CRM integration",
+      "500 AI calls/month",
+      "Cold email campaigns",
       "Call recordings & transcripts",
+      "CRM integration",
+      "Advanced analytics",
     ],
     popular: true,
   },
@@ -40,7 +40,7 @@ const plans = [
     costPerCall: 0.67,
     description: "Best value for enterprises and agencies",
     features: [
-      "2000 AI research calls/month",
+      "2000 AI calls/month",
       "30+ languages supported",
       "Full API access",
       "Dedicated account manager",
@@ -55,33 +55,28 @@ const PricingPreview = () => {
 
   return (
     <section id="pricing-preview" className="py-16 md:py-24 relative">
-      {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent pointer-events-none" />
 
       <div className="container mx-auto px-6 relative z-10">
-        {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-medium mb-6">
             <Zap className="h-4 w-4" />
             Simple Pricing
           </div>
           <h2 className="font-display text-3xl md:text-5xl font-bold mb-6">
-            Choose Your <span className="text-gradient">Plan</span>
+            Choose your <span className="text-gradient">plan</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            No hidden fees. No per-minute charges. Just straightforward pricing that scales with your needs.
+            Straightforward pricing that scales with your outreach volume.
           </p>
         </div>
 
-        {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto mb-12">
           {plans.map((plan, index) => (
             <div
               key={index}
               className={`glass-card rounded-2xl p-6 lg:p-8 relative transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 ${
-                plan.popular
-                  ? "border-2 border-primary md:scale-105"
-                  : "border border-border/50"
+                plan.popular ? "border-2 border-primary md:scale-105" : "border border-border/50"
               }`}
             >
               {plan.popular && (
@@ -94,19 +89,13 @@ const PricingPreview = () => {
               )}
 
               <div className="mb-4">
-                <h3 className="font-display text-xl font-bold mb-1">
-                  {plan.name}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {plan.description}
-                </p>
+                <h3 className="font-display text-xl font-bold mb-1">{plan.name}</h3>
+                <p className="text-sm text-muted-foreground">{plan.description}</p>
               </div>
 
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="font-display text-4xl font-bold">
-                    ${plan.price}
-                  </span>
+                  <span className="font-display text-4xl font-bold">${plan.price}</span>
                   <span className="text-muted-foreground text-sm">/month</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -119,7 +108,7 @@ const PricingPreview = () => {
                 className="w-full mb-6"
                 onClick={signInWithGoogle}
               >
-                Get Started
+                Get started
               </Button>
 
               <div className="space-y-2">
@@ -134,11 +123,10 @@ const PricingPreview = () => {
           ))}
         </div>
 
-        {/* View Full Pricing Link */}
         <div className="text-center">
           <Button variant="ghost" size="lg" asChild>
             <Link to="/pricing" className="group">
-              View Full Pricing & Features
+              View full pricing & features
               <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Link>
           </Button>

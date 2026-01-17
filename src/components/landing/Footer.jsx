@@ -28,7 +28,6 @@ const Footer = () => {
     <footer className="border-t border-border/50 pt-16 pb-8">
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-12">
-          {/* Logo & Description */}
           <div className="col-span-2">
             <a href="/" className="flex items-center gap-3 mb-4">
               <img
@@ -41,11 +40,10 @@ const Footer = () => {
               </span>
             </a>
             <p className="text-sm text-muted-foreground mb-4 max-w-xs">
-              AI-powered market research platform that helps you validate ideas and gather insights through intelligent voice conversations.
+              Lead finding + AI outreach for entrepreneurs: build lists, generate scripts, and run cold email + AI calling campaigns.
             </p>
           </div>
 
-          {/* Links */}
           <div>
             <h4 className="font-semibold mb-4">Product</h4>
             <ul className="space-y-2">
@@ -99,7 +97,6 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Bottom Bar */}
         <div className="border-t border-border/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} ValidateCall. All rights reserved.

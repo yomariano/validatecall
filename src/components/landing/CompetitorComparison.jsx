@@ -19,7 +19,7 @@ const competitors = [
     sentimentAnalysis: true,
     transcripts: true,
     researchFocus: true,
-    researchNote: "Built for validation",
+    researchNote: "Built for outreach",
   },
   {
     name: "Apollo.io",
@@ -144,8 +144,8 @@ const CompetitorComparison = () => {
             More Than Just a <span className="text-gradient">Lead Database</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            Other platforms give you contacts. ValidateCall gives you insights.
-            Our AI actually makes the research calls for you.
+            Other platforms give you contacts. ValidateCall helps you turn them into customers.
+            Our AI writes emails and makes calls for you.
           </p>
         </div>
 
@@ -166,7 +166,7 @@ const CompetitorComparison = () => {
             </div>
             <h3 className="font-semibold text-lg mb-2">AI Makes The Calls</h3>
             <p className="text-sm text-muted-foreground">
-              Our AI voice agents conduct research calls 24/7. You get the insights.
+              Our AI voice agents make cold calls 24/7. You get transcripts and outcomes.
             </p>
           </div>
           <div className="glass-card rounded-2xl p-6 text-center">
@@ -175,7 +175,7 @@ const CompetitorComparison = () => {
             </div>
             <h3 className="font-semibold text-lg mb-2">Actionable Insights</h3>
             <p className="text-sm text-muted-foreground">
-              Get transcripts, sentiment analysis, and validated market data.
+              Get transcripts, sentiment analysis, and conversation summaries.
             </p>
           </div>
         </div>
@@ -294,7 +294,7 @@ const CompetitorComparison = () => {
                   ))}
                 </tr>
                 <tr>
-                  <td className="py-4 px-4 text-sm font-medium">Market Research Focus</td>
+                  <td className="py-4 px-4 text-sm font-medium">Built-in Outreach</td>
                   {competitors.map((comp, idx) => (
                     <td
                       key={idx}
@@ -348,11 +348,11 @@ const CompetitorComparison = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-success" />
-                <span>Research focused</span>
+                <span>Outreach focused</span>
               </div>
             </div>
             <Button variant="hero" className="w-full mt-4" onClick={signInWithGoogle}>
-              Start Free Trial
+              Get started
             </Button>
           </div>
 
@@ -391,14 +391,14 @@ const CompetitorComparison = () => {
         {/* Bottom Message */}
         <div className="mt-12 glass-card rounded-2xl p-6 md:p-8 text-center">
           <h3 className="font-display text-xl md:text-2xl font-bold mb-3">
-            Stop Buying Lists. Start Getting <span className="text-gradient">Insights.</span>
+            Stop buying lists. Start <span className="text-gradient">booking calls.</span>
           </h3>
           <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
             Other platforms sell you contact data and leave you to make hundreds of calls yourself.
-            ValidateCall's AI does the calling, analyzes the conversations, and delivers actionable market research.
+            ValidateCall's AI helps you run outreach with calls and emails, then delivers transcripts and outcomes.
           </p>
           <Button variant="hero" size="lg" onClick={signInWithGoogle}>
-            Start Your Free Trial
+            Get started free
           </Button>
         </div>
       </div>

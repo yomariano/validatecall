@@ -1,35 +1,35 @@
-import { Globe, Bot, Zap, Shield, BarChart3, Users } from "lucide-react";
+import { BarChart3, Globe, Mail, PhoneCall, Users, Wand2 } from "lucide-react";
 
 const features = [
   {
     icon: Globe,
-    title: "Global Lead Database",
-    description: "Access verified leads from 100+ industries across every country. Filter by location, company size, revenue, and more to find your perfect market.",
+    title: "Lead database for any industry",
+    description: "Search 100+ industries and pull targeted leads by location, company size, and more.",
   },
   {
-    icon: Bot,
-    title: "Multilingual AI Agents",
-    description: "Deploy AI research agents that speak 30+ languages fluently. Natural conversations that sound human, gathering authentic market insights.",
+    icon: Wand2,
+    title: "AI script generator",
+    description: "Generate cold emails, follow-ups, and call pitches tailored to your offer and niche.",
   },
   {
-    icon: Zap,
-    title: "Instant Deployment",
-    description: "Launch your first AI research campaign in minutes. No technical setup required—just select your target market and go.",
+    icon: Mail,
+    title: "Cold email campaigns",
+    description: "Launch sequences from your sender and track replies so you know what’s working.",
   },
   {
-    icon: Shield,
-    title: "Compliance Built-In",
-    description: "GDPR, CCPA, and TCPA compliant. Automatic do-not-call list management and consent tracking for ethical research.",
+    icon: PhoneCall,
+    title: "AI cold calling",
+    description: "Deploy voice agents that call leads for you and deliver transcripts, outcomes, and summaries.",
   },
   {
     icon: BarChart3,
-    title: "Real-Time Analytics",
-    description: "Track response rates, sentiment analysis, and market trends in real-time. AI-powered insights to validate your ideas.",
+    title: "Campaign analytics",
+    description: "See which industries, lists, and scripts generate the most replies and booked calls.",
   },
   {
     icon: Users,
-    title: "CRM Integration",
-    description: "Seamlessly sync with Salesforce, HubSpot, Pipedrive, and 50+ other CRMs. Keep all your market research data organized.",
+    title: "Exports & handoffs",
+    description: "Export to CSV or sync to your workflow so qualified leads get followed up fast.",
   },
 ];
 
@@ -39,18 +39,16 @@ const Features = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent" />
 
       <div className="container mx-auto px-6 relative z-10">
-        {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center mb-16">
           <h2 className="font-display text-3xl md:text-5xl font-bold mb-6">
-            Everything You Need to{" "}
-            <span className="text-gradient">Validate Your Ideas</span>
+            Everything you need to{" "}
+            <span className="text-gradient">find leads & book calls</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            Powerful features designed to help you discover insights, conduct research, and validate business concepts faster than ever before.
+            Build targeted lists, generate outreach with AI, and run cold email + AI calling campaigns in one place.
           </p>
         </div>
 
-        {/* Features Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => (
             <div

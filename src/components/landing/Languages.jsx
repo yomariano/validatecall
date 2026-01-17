@@ -17,18 +17,15 @@ const Languages = () => {
   return (
     <section className="py-16 md:py-20 relative overflow-hidden">
       <div className="container mx-auto px-6">
-        {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center mb-16">
           <h2 className="font-display text-3xl md:text-5xl font-bold mb-6">
-            Research in{" "}
-            <span className="text-gradient">Any Language</span>
+            Call in <span className="text-gradient">any language</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            Our AI research agents are fluent in 30+ languages, with natural accents and cultural nuances that make every conversation feel authentic and local.
+            Run campaigns globally with AI voice agents that speak 30+ languages with natural accents.
           </p>
         </div>
 
-        {/* Languages Grid */}
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 mb-12">
           {languages.map((lang, index) => (
             <div
@@ -42,7 +39,6 @@ const Languages = () => {
           ))}
         </div>
 
-        {/* More Languages */}
         <div className="text-center">
           <p className="text-muted-foreground">
             <span className="text-primary font-semibold">+18 more languages</span> including Dutch, Polish, Turkish, Thai, and more

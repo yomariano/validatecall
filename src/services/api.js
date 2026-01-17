@@ -469,6 +469,13 @@ export const emailApi = {
             method: 'POST',
             body: JSON.stringify({ leadId, toEmail, toName, subject, body, senderName, senderEmail, senderCompany, userId }),
         }),
+
+    // Track user events for marketing automation
+    trackEvent: ({ userId, eventType, eventData, pageUrl }) =>
+        apiRequest('/api/email/track-event', {
+            method: 'POST',
+            body: JSON.stringify({ userId, eventType, eventData, pageUrl }),
+        }).catch(() => {}), // Silent fail - non-critical
 };
 
 // =============================================
@@ -556,6 +563,79 @@ export const usageApi = {
         }),
 };
 
+// =============================================
+// ADMIN - Marketing Campaigns (Admin Only)
+// =============================================
+
+export const adminApi = {
+    // User segments
+    getSegments: (adminUserId) =>
+        apiRequest(`/api/admin/users/segments?adminUserId=${adminUserId}`),
+
+    getUsers: (adminUserId, segment = 'all', limit = 100) =>
+        apiRequest(`/api/admin/users?adminUserId=${adminUserId}&segment=${segment}&limit=${limit}`),
+
+    // Campaigns
+    getCampaigns: (adminUserId, status) => {
+        const params = new URLSearchParams({ adminUserId });
+        if (status) params.append('status', status);
+        return apiRequest(`/api/admin/campaigns?${params}`);
+    },
+
+    createCampaign: (adminUserId, campaign) =>
+        apiRequest('/api/admin/campaigns', {
+            method: 'POST',
+            body: JSON.stringify({ adminUserId, ...campaign }),
+        }),
+
+    updateCampaign: (adminUserId, id, updates) =>
+        apiRequest(`/api/admin/campaigns/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ adminUserId, ...updates }),
+        }),
+
+    sendCampaign: (adminUserId, id) =>
+        apiRequest(`/api/admin/campaigns/${id}/send`, {
+            method: 'POST',
+            body: JSON.stringify({ adminUserId }),
+        }),
+
+    deleteCampaign: (adminUserId, id) =>
+        apiRequest(`/api/admin/campaigns/${id}?adminUserId=${adminUserId}`, {
+            method: 'DELETE',
+        }),
+
+    // Templates
+    getTemplates: (adminUserId) =>
+        apiRequest(`/api/admin/templates?adminUserId=${adminUserId}`),
+
+    createTemplate: (adminUserId, template) =>
+        apiRequest('/api/admin/templates', {
+            method: 'POST',
+            body: JSON.stringify({ adminUserId, ...template }),
+        }),
+
+    // Triggers
+    getTriggers: (adminUserId) =>
+        apiRequest(`/api/admin/triggers?adminUserId=${adminUserId}`),
+
+    updateTrigger: (adminUserId, id, updates) =>
+        apiRequest(`/api/admin/triggers/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ adminUserId, ...updates }),
+        }),
+
+    createTrigger: (adminUserId, trigger) =>
+        apiRequest('/api/admin/triggers', {
+            method: 'POST',
+            body: JSON.stringify({ adminUserId, ...trigger }),
+        }),
+
+    // Analytics
+    getAnalytics: (adminUserId) =>
+        apiRequest(`/api/admin/analytics?adminUserId=${adminUserId}`),
+};
+
 // Export default API object
 export default {
     getHealth,
@@ -568,6 +648,7 @@ export default {
     usageApi,
     emailApi,
     domainsApi,
+    adminApi,
     isLeadsConfigured,
     isSupabaseConfigured,
     isVapiConfigured,

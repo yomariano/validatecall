@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from '../context/AuthContext';
-import { stripeApi } from '../services/api';
+import { stripeApi, emailApi } from '../services/api';
 import { PaywallEvents } from '@/lib/analytics';
 
 // Stripe Payment Links - loaded from environment variables
@@ -117,6 +117,17 @@ export default function Pricing() {
   useEffect(() => {
     loadSubscription();
   }, [user]);
+
+  // Track pricing page view for abandoned upgrade triggers
+  useEffect(() => {
+    if (user?.id && !subscription) {
+      emailApi.trackEvent({
+        userId: user.id,
+        eventType: 'pricing_page_view',
+        pageUrl: window.location.href,
+      });
+    }
+  }, [user?.id, subscription]);
 
   const loadSubscription = async () => {
     if (!user?.id) {

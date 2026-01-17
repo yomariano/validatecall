@@ -16,7 +16,8 @@ import {
   HelpCircle,
   Sparkles,
   Bot,
-  Settings
+  Settings,
+  Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -173,7 +174,7 @@ function Sidebar({ onShowWizard }) {
           Workspace
         </p>
       </div>
-      <div className="px-4">
+      <div className="px-4 space-y-2">
         <NavLink
           to="/billing"
           className="flex items-center gap-3 rounded-lg px-4 py-3 bg-secondary/50 border border-border hover:bg-secondary transition-colors"
@@ -187,6 +188,27 @@ function Sidebar({ onShowWizard }) {
             Upgrade
           </Badge>
         </NavLink>
+
+        {/* Admin link - visible in localhost or for admin users */}
+        {isLocalhost && (
+          <NavLink
+            to="/admin"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-4 py-3 border transition-colors",
+                isActive
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-primary/5 border-primary/20 hover:bg-primary/10 text-foreground"
+              )
+            }
+          >
+            <Shield className="h-5 w-5" />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">Admin</span>
+              <span className="text-xs opacity-70">Marketing</span>
+            </div>
+          </NavLink>
+        )}
       </div>
 
       {/* Spacer */}
