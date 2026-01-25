@@ -628,10 +628,10 @@ export const settingsApi = {
     getBrandSettings: (userId) => apiRequest(`/api/settings/brand?userId=${userId}`),
 
     // Save user's brand settings
-    saveBrandSettings: (userId, { brandLogoUrl, brandColor, brandName }) =>
+    saveBrandSettings: (userId, { brandLogoUrl, brandColor, brandName, brandCtaText, brandCtaUrl }) =>
         apiRequest('/api/settings/brand', {
             method: 'POST',
-            body: JSON.stringify({ userId, brandLogoUrl, brandColor, brandName }),
+            body: JSON.stringify({ userId, brandLogoUrl, brandColor, brandName, brandCtaText, brandCtaUrl }),
         }),
 
     // Upload brand logo

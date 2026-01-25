@@ -27,6 +27,8 @@ import {
   Building2,
   Upload,
   X,
+  Link,
+  MousePointer,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -83,6 +85,8 @@ function Settings() {
   const [brandLogoUrl, setBrandLogoUrl] = useState('');
   const [brandColor, setBrandColor] = useState('#6366f1');
   const [brandName, setBrandName] = useState('');
+  const [brandCtaText, setBrandCtaText] = useState('');
+  const [brandCtaUrl, setBrandCtaUrl] = useState('');
   const [isLoadingBrand, setIsLoadingBrand] = useState(false);
   const [isSavingBrand, setIsSavingBrand] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -166,6 +170,8 @@ function Settings() {
         setBrandLogoUrl(result.brandLogoUrl || '');
         setBrandColor(result.brandColor || '#6366f1');
         setBrandName(result.brandName || '');
+        setBrandCtaText(result.brandCtaText || '');
+        setBrandCtaUrl(result.brandCtaUrl || '');
       }
     } catch (err) {
       console.error('Failed to load brand settings:', err);
@@ -185,6 +191,8 @@ function Settings() {
         brandLogoUrl: brandLogoUrl.trim() || null,
         brandColor: brandColor || null,
         brandName: brandName.trim() || null,
+        brandCtaText: brandCtaText.trim() || null,
+        brandCtaUrl: brandCtaUrl.trim() || null,
       });
       if (result.success) {
         setSuccess('Brand settings saved successfully!');
@@ -1338,11 +1346,63 @@ function Settings() {
                 </div>
               </FormGroup>
 
+              {/* CTA Button */}
+              <FormGroup>
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <MousePointer className="h-4 w-4" />
+                  Call-to-Action Button (Optional)
+                </label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Add a button to your emails that links to your website, booking page, or any URL
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Button Text</label>
+                    <Input
+                      value={brandCtaText}
+                      onChange={(e) => setBrandCtaText(e.target.value)}
+                      placeholder="e.g., Visit Our Website"
+                      disabled={isSavingBrand}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Button URL</label>
+                    <div className="relative">
+                      <Link className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={brandCtaUrl}
+                        onChange={(e) => setBrandCtaUrl(e.target.value)}
+                        placeholder="https://yoursite.com"
+                        className="pl-10"
+                        disabled={isSavingBrand}
+                      />
+                    </div>
+                  </div>
+                </div>
+                {brandCtaText && brandCtaUrl && (
+                  <div className="mt-3 p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-2">Button Preview:</p>
+                    <div className="text-center">
+                      <a
+                        href={brandCtaUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block text-white font-semibold text-sm py-3 px-6 rounded-lg shadow-md hover:opacity-90 transition-opacity"
+                        style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)` }}
+                      >
+                        {brandCtaText}
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </FormGroup>
+
               {/* Email Preview */}
               <div className="border rounded-lg overflow-hidden">
                 <div className="text-xs text-muted-foreground p-2 bg-muted/50 border-b">
-                  Email Header Preview
+                  Email Preview
                 </div>
+                {/* Header */}
                 <div
                   className="p-6 text-center"
                   style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)` }}
@@ -1362,6 +1422,25 @@ function Settings() {
                     </h2>
                   )}
                   <p className="text-white/80 text-sm">yourdomain.com</p>
+                </div>
+                {/* Body preview */}
+                <div className="p-6 bg-white">
+                  <p className="text-sm text-muted-foreground italic">Your email content will appear here...</p>
+                  {/* CTA Button */}
+                  {brandCtaText && brandCtaUrl && (
+                    <div className="mt-4 text-center">
+                      <span
+                        className="inline-block text-white font-semibold text-sm py-3 px-6 rounded-lg"
+                        style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)` }}
+                      >
+                        {brandCtaText}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {/* Footer */}
+                <div className="p-4 border-t text-center" style={{ backgroundColor: `${brandColor}10` }}>
+                  <p className="text-xs text-muted-foreground">yourdomain.com</p>
                 </div>
               </div>
 
