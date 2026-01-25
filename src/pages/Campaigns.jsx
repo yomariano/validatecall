@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { vapiApi, claudeApi, emailApi, domainsApi, settingsApi } from '../services/api';
-import { getLeads, createCampaign, getCampaigns, saveCall } from '../services/supabase';
+import { getLeads, createCampaign, getCampaigns, saveCall, updateCampaign } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useUsage } from '../context/UsageContext';
 import { useOnboarding } from '../components/OnboardingWizard';
@@ -42,7 +42,8 @@ import {
   ChevronUp,
   Check,
   Bot,
-  Volume2
+  Volume2,
+  Save
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -124,6 +125,7 @@ function Campaigns() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingTemplates, setIsSavingTemplates] = useState(false);
   const [isCalling, setIsCalling] = useState(false);
   const [callProgress, setCallProgress] = useState({ current: 0, total: 0, results: [] });
   const [error, setError] = useState('');
@@ -320,6 +322,10 @@ function Campaigns() {
         totalLeads: selectedLeadIds.length,
         leadIds: selectedLeadIds,
         selectedAgentId: selectedAgentId || null,
+        senderName: campaignSenderName || null,
+        senderEmail: campaignSenderEmail || null,
+        emailSubject: campaignEmailSubject || null,
+        emailBody: campaignEmailBody || null,
       });
 
       CampaignEvents.created(selectedLeadIds.length, !!selectedAgentId);
@@ -352,10 +358,18 @@ function Campaigns() {
     const campaignLeadIds = campaign.lead_ids || [];
     const campaignLeads = leads.filter(l => campaignLeadIds.includes(l.id));
 
-    // Set the agent ID from the campaign if it has one
+    // Load saved templates from campaign
     if (campaign.selected_agent_id) {
       setSelectedAgentId(campaign.selected_agent_id);
+    } else {
+      setSelectedAgentId('');
     }
+    setCampaignCompanyContext(campaign.product_idea || '');
+    setCampaignCallPitch(campaign.company_context || '');
+    setCampaignSenderName(campaign.sender_name || '');
+    setCampaignSenderEmail(campaign.sender_email || '');
+    setCampaignEmailSubject(campaign.email_subject || '');
+    setCampaignEmailBody(campaign.email_body || '');
 
     setViewingCampaign({
       ...campaign,
@@ -372,10 +386,18 @@ function Campaigns() {
 
     CampaignEvents.resumed(campaign.id);
 
-    // Set the agent ID from the campaign if it has one
+    // Load saved templates from campaign
     if (campaign.selected_agent_id) {
       setSelectedAgentId(campaign.selected_agent_id);
+    } else {
+      setSelectedAgentId('');
     }
+    setCampaignCompanyContext(campaign.product_idea || '');
+    setCampaignCallPitch(campaign.company_context || '');
+    setCampaignSenderName(campaign.sender_name || '');
+    setCampaignSenderEmail(campaign.sender_email || '');
+    setCampaignEmailSubject(campaign.email_subject || '');
+    setCampaignEmailBody(campaign.email_body || '');
 
     setActiveCampaign({
       ...campaign,
@@ -388,6 +410,44 @@ function Campaigns() {
       callResults: [],
     });
     setActiveTab('detail');
+  };
+
+  // Save campaign templates
+  const saveCampaignTemplates = async () => {
+    if (!viewingCampaign) return;
+
+    setIsSavingTemplates(true);
+    setError('');
+
+    try {
+      await updateCampaign(viewingCampaign.id, {
+        product_idea: campaignCompanyContext,
+        company_context: campaignCallPitch,
+        selected_agent_id: selectedAgentId || null,
+        sender_name: campaignSenderName || null,
+        sender_email: campaignSenderEmail || null,
+        email_subject: campaignEmailSubject || null,
+        email_body: campaignEmailBody || null,
+      });
+
+      // Update the viewing campaign with new values
+      setViewingCampaign(prev => ({
+        ...prev,
+        product_idea: campaignCompanyContext,
+        company_context: campaignCallPitch,
+        selected_agent_id: selectedAgentId || null,
+        sender_name: campaignSenderName || null,
+        sender_email: campaignSenderEmail || null,
+        email_subject: campaignEmailSubject || null,
+        email_body: campaignEmailBody || null,
+      }));
+
+      setSuccess('Campaign templates saved!');
+    } catch (err) {
+      setError(err.message || 'Failed to save campaign templates');
+    } finally {
+      setIsSavingTemplates(false);
+    }
   };
 
   // Call all leads in the active campaign
@@ -983,9 +1043,29 @@ function Campaigns() {
                 </div>
               </div>
 
-              <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                <span className="font-medium">Tip:</span> Generate templates here to apply them to all leads. You can still customize the pitch or email for individual leads when you click on them.
-              </p>
+              {/* Save Campaign Button */}
+              <div className="flex items-center justify-between pt-4 border-t border-border">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium">Tip:</span> Save your templates to use them every time you open this campaign.
+                </p>
+                <Button
+                  onClick={saveCampaignTemplates}
+                  disabled={isSavingTemplates}
+                  className="gap-2"
+                >
+                  {isSavingTemplates ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Save Campaign
+                    </>
+                  )}
+                </Button>
+              </div>
             </CardContent>
           )}
         </Card>

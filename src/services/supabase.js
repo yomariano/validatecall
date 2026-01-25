@@ -53,6 +53,10 @@ export const updateCampaignStats = async (campaignId, stats) => {
   return supabaseApi.updateCampaignStats(campaignId, stats);
 };
 
+export const updateCampaign = async (campaignId, updates) => {
+  return supabaseApi.updateCampaign(campaignId, updates);
+};
+
 // =============================================
 // CALLS
 // =============================================

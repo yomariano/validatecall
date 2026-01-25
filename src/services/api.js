@@ -176,6 +176,12 @@ export const supabaseApi = {
             body: JSON.stringify(stats),
         }),
 
+    updateCampaign: (id, updates) =>
+        apiRequest(`/api/supabase/campaigns/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(updates),
+        }),
+
     // Calls
     getCalls: (filters = {}) => {
         const params = new URLSearchParams();
