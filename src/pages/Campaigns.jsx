@@ -8,6 +8,7 @@ import { useOnboarding } from '../components/OnboardingWizard';
 import PaywallModal from '../components/PaywallModal';
 import HardPaywall from '../components/HardPaywall';
 import LeadActionPanel from '../components/LeadActionPanel';
+import VoiceTestModal from '../components/VoiceTestModal';
 import { CampaignEvents } from '@/lib/analytics';
 import {
   Megaphone,
@@ -39,7 +40,9 @@ import {
   Building2,
   ChevronDown,
   ChevronUp,
-  Check
+  Check,
+  Bot,
+  Volume2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -97,6 +100,11 @@ function Campaigns() {
 
   // Verified domains for email sender
   const [verifiedDomains, setVerifiedDomains] = useState([]);
+
+  // Voice agents state
+  const [voiceAgents, setVoiceAgents] = useState([]);
+  const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [isTestModalOpen, setIsTestModalOpen] = useState(false);
 
   // Filters for lead selection
   const [statusFilter, setStatusFilter] = useState('all');
@@ -227,6 +235,14 @@ function Campaigns() {
         }
       }
 
+      // Load voice agents
+      try {
+        const agents = await vapiApi.getAssistants();
+        setVoiceAgents(agents || []);
+      } catch {
+        // Silently fail - agents are optional
+      }
+
       // Load phone stats for multi-tenant mode
       const isLocalhost = window.location.hostname === 'localhost' ||
                           window.location.hostname === '127.0.0.1';
@@ -299,19 +315,26 @@ function Campaigns() {
     try {
       const campaign = await createCampaign({
         name: campaignName || `Campaign ${new Date().toLocaleDateString()}`,
-        productIdea: '', // No longer required
-        companyContext: '',
+        productIdea: campaignCompanyContext || '',
+        companyContext: campaignCallPitch || '',
         totalLeads: selectedLeadIds.length,
         leadIds: selectedLeadIds,
-        selectedAgentId: null,
+        selectedAgentId: selectedAgentId || null,
       });
 
-      CampaignEvents.created(selectedLeadIds.length, false);
+      CampaignEvents.created(selectedLeadIds.length, !!selectedAgentId);
       setSuccess('Campaign saved successfully!');
 
       // Reset form
       setCampaignName('');
       setSelectedLeadIds([]);
+      setSelectedAgentId('');
+      setCampaignCompanyContext('');
+      setCampaignCallPitch('');
+      setCampaignEmailSubject('');
+      setCampaignEmailBody('');
+      setCampaignSenderEmail('');
+      setCampaignSenderName('');
       clearFilters();
 
       // Refresh and switch to active campaigns
@@ -329,6 +352,11 @@ function Campaigns() {
     const campaignLeadIds = campaign.lead_ids || [];
     const campaignLeads = leads.filter(l => campaignLeadIds.includes(l.id));
 
+    // Set the agent ID from the campaign if it has one
+    if (campaign.selected_agent_id) {
+      setSelectedAgentId(campaign.selected_agent_id);
+    }
+
     setViewingCampaign({
       ...campaign,
       leads: campaignLeads,
@@ -343,6 +371,11 @@ function Campaigns() {
     const campaignLeads = leads.filter(l => campaignLeadIds.includes(l.id));
 
     CampaignEvents.resumed(campaign.id);
+
+    // Set the agent ID from the campaign if it has one
+    if (campaign.selected_agent_id) {
+      setSelectedAgentId(campaign.selected_agent_id);
+    }
 
     setActiveCampaign({
       ...campaign,
@@ -486,21 +519,23 @@ function Campaigns() {
   const makeCall = async (lead, campaign) => {
     try {
       const phoneNumber = lead.phone.startsWith('+') ? lead.phone : `+${lead.phone}`;
+      // Use the currently selected agent from state, or fall back to campaign's saved agent
+      const agentToUse = selectedAgentId || campaign.selected_agent_id;
 
       const callData = user?.id
         ? await vapiApi.initiateUserCall(user.id, {
             phoneNumber,
             customerName: lead.name,
-            productIdea: campaign.product_idea || '',
-            companyContext: campaign.company_context || '',
-            assistantId: campaign.selected_agent_id || undefined,
+            productIdea: campaignCompanyContext || campaign.product_idea || '',
+            companyContext: campaignCallPitch || campaign.company_context || '',
+            assistantId: agentToUse || undefined,
           })
         : await vapiApi.initiateCall({
             phoneNumber,
             customerName: lead.name,
-            productIdea: campaign.product_idea || '',
-            companyContext: campaign.company_context || '',
-            assistantId: campaign.selected_agent_id || undefined,
+            productIdea: campaignCompanyContext || campaign.product_idea || '',
+            companyContext: campaignCallPitch || campaign.company_context || '',
+            assistantId: agentToUse || undefined,
           });
 
       try {
@@ -637,6 +672,13 @@ function Campaigns() {
           onClick={() => {
             setViewingCampaign(null);
             setActiveCampaign(null);
+            setSelectedAgentId('');
+            setCampaignCompanyContext('');
+            setCampaignCallPitch('');
+            setCampaignEmailSubject('');
+            setCampaignEmailBody('');
+            setCampaignSenderEmail('');
+            setCampaignSenderName('');
             setActiveTab('active');
           }}
           className="mb-4"
@@ -763,13 +805,97 @@ function Campaigns() {
                 </FormGroup>
               </div>
 
+              {/* Voice Agent Selection */}
+              <div className="p-4 border border-primary/30 rounded-lg bg-gradient-to-br from-primary/5 to-transparent">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <Bot className="h-4 w-4 text-primary" />
+                    Voice Agent for Calls
+                  </h3>
+                  {selectedAgentId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsTestModalOpen(true)}
+                      className="gap-2"
+                    >
+                      <Volume2 className="h-3 w-3" />
+                      Test Agent
+                    </Button>
+                  )}
+                </div>
+
+                {voiceAgents.length > 0 ? (
+                  <div className="space-y-3">
+                    <Select
+                      value={selectedAgentId}
+                      onChange={(e) => setSelectedAgentId(e.target.value)}
+                      className="w-full"
+                    >
+                      <option value="">Select a voice agent...</option>
+                      {voiceAgents.map((agent) => (
+                        <option key={agent.id} value={agent.id}>
+                          {agent.name || 'Unnamed Agent'}
+                        </option>
+                      ))}
+                    </Select>
+
+                    {selectedAgentId && (
+                      <div className="p-3 bg-muted/50 rounded-md text-sm">
+                        {(() => {
+                          const agent = voiceAgents.find(a => a.id === selectedAgentId);
+                          if (!agent) return null;
+                          return (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {agent.voice?.provider || 'Unknown'} voice
+                                </Badge>
+                                <Badge variant="secondary" className="text-xs">
+                                  {agent.model?.model || 'gpt-4o-mini'}
+                                </Badge>
+                              </div>
+                              {agent.firstMessage && (
+                                <p className="text-xs text-muted-foreground line-clamp-2">
+                                  <span className="font-medium">First message:</span> {agent.firstMessage}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    <p className="text-xs text-muted-foreground">
+                      The selected agent will be used for all calls in this campaign. The agent's pitch and rules will override the manual pitch below.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3 py-4 text-center">
+                    <Bot className="h-8 w-8 text-muted-foreground/50" />
+                    <p className="text-sm text-muted-foreground">No voice agents created yet</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.location.href = '/agents'}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Create Voice Agent
+                    </Button>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Call Pitch Section */}
                 <div className="space-y-4 p-4 border border-border rounded-lg bg-card">
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium flex items-center gap-2">
                       <Phone className="h-4 w-4 text-primary" />
-                      Call Pitch Template
+                      Manual Call Pitch
+                      {selectedAgentId && (
+                        <Badge variant="secondary" className="text-xs ml-1">Optional</Badge>
+                      )}
                     </h3>
                     <Button
                       variant="outline"
@@ -794,15 +920,19 @@ function Campaigns() {
                   <Textarea
                     value={campaignCallPitch}
                     onChange={(e) => setCampaignCallPitch(e.target.value)}
-                    placeholder="AI-generated pitch will appear here, or write your own..."
+                    placeholder={selectedAgentId ? "Agent's built-in pitch will be used. Add extra context here if needed..." : "AI-generated pitch will appear here, or write your own..."}
                     rows={5}
                     className="text-sm"
                   />
-                  {campaignCallPitch && (
+                  {selectedAgentId ? (
+                    <p className="text-xs text-muted-foreground">
+                      The selected voice agent has its own pitch configured. This field can be used to add extra context if needed.
+                    </p>
+                  ) : campaignCallPitch ? (
                     <p className="text-xs text-muted-foreground">
                       This pitch will be used as the default for all call actions in this campaign.
                     </p>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Email Template Section */}
@@ -1588,7 +1718,15 @@ function Campaigns() {
           emailBody: campaignEmailBody,
           senderEmail: campaignSenderEmail,
           senderName: campaignSenderName,
+          selectedAgentId: selectedAgentId,
         }}
+      />
+
+      {/* Voice Test Modal */}
+      <VoiceTestModal
+        isOpen={isTestModalOpen}
+        onClose={() => setIsTestModalOpen(false)}
+        agent={voiceAgents.find(a => a.id === selectedAgentId)}
       />
     </>
   );
