@@ -172,11 +172,19 @@ export default function LeadActionPanel({
       if (panelType === 'email') {
         setProductIdea(campaignDefaults.companyContext || '');
         setCompanyContext('');
-        setEmailSubject(campaignDefaults.emailSubject || '');
-        // Personalize the email body by replacing [Business Name] with actual lead name
-        const personalizedBody = (campaignDefaults.emailBody || '')
-          .replace(/\[Business Name\]/g, lead.name || '');
-        setEmailBody(personalizedBody);
+
+        // Personalize subject and body with lead data
+        const personalize = (text) => {
+          if (!text) return '';
+          return text
+            .replace(/\{\{businessName\}\}/g, lead.name || '')
+            .replace(/\{\{city\}\}/g, lead.city || '')
+            .replace(/\{\{industry\}\}/g, lead.category || '')
+            .replace(/\[Business Name\]/g, lead.name || ''); // Legacy support
+        };
+
+        setEmailSubject(personalize(campaignDefaults.emailSubject || ''));
+        setEmailBody(personalize(campaignDefaults.emailBody || ''));
       }
 
       // Initialize edit form

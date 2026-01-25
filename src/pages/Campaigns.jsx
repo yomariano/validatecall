@@ -683,21 +683,30 @@ function Campaigns() {
     }
     setIsGeneratingEmail(true);
     try {
-      // Use a generic lead placeholder for template generation
+      // Use placeholders for dynamic content
       const result = await emailApi.generateColdEmail({
         lead: {
-          name: '[Business Name]',
-          category: viewingCampaign?.leads?.[0]?.category || 'business',
-          city: viewingCampaign?.leads?.[0]?.city || '',
+          name: '{{businessName}}',
+          category: viewingCampaign?.leads?.[0]?.category || '{{industry}}',
+          city: '{{city}}',
         },
         productIdea: campaignCompanyContext.trim(),
         companyContext: campaignCallPitch.trim() || undefined,
         senderName: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Your Name',
+        usePlaceholders: true, // Tell API to use placeholders
       });
       if (result.success && result.email) {
-        setCampaignEmailSubject(result.email.subject);
-        setCampaignEmailBody(result.email.body);
-        setSuccess('Email template generated successfully!');
+        // Ensure placeholders are in the template
+        let subject = result.email.subject;
+        let body = result.email.body;
+
+        // Replace any literal placeholders that might have been escaped
+        subject = subject.replace(/\[Business Name\]/g, '{{businessName}}');
+        body = body.replace(/\[Business Name\]/g, '{{businessName}}');
+
+        setCampaignEmailSubject(subject);
+        setCampaignEmailBody(body);
+        setSuccess('Email template generated! Use {{businessName}}, {{city}}, {{industry}} for dynamic content.');
       } else {
         setError('Failed to generate email template');
       }
@@ -1039,11 +1048,19 @@ function Campaigns() {
                     rows={5}
                     className="text-sm"
                   />
-                  {campaignEmailBody && (
+                  <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">
-                      This email will be used as the default for all email actions in this campaign.
+                      <span className="font-medium">Dynamic variables:</span>{' '}
+                      <code className="bg-muted px-1 rounded">{'{{businessName}}'}</code>{' '}
+                      <code className="bg-muted px-1 rounded">{'{{city}}'}</code>{' '}
+                      <code className="bg-muted px-1 rounded">{'{{industry}}'}</code>
                     </p>
-                  )}
+                    {campaignEmailBody && (
+                      <p className="text-xs text-muted-foreground">
+                        This template will be personalized for each lead when sending.
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
