@@ -18,7 +18,8 @@ import {
   Bot,
   Settings,
   Shield,
-  X
+  X,
+  Mail
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,7 @@ const navItems = [
   { to: '/leads', icon: Users, label: 'Find Leads', step: 1 },
   { to: '/agents', icon: Bot, label: 'Voice Agents' },
   { to: '/campaigns', icon: PhoneCall, label: 'Campaigns', step: 2 },
+  { to: '/inbox', icon: Mail, label: 'Email Inbox' },
   { to: '/history', icon: BarChart3, label: 'Analytics' },
   { to: '/billing', icon: CreditCard, label: 'Plans & Billing' },
   { to: '/settings', icon: Settings, label: 'Settings' },

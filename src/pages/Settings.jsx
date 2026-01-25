@@ -53,18 +53,31 @@ function Settings() {
   // Copy state
   const [copiedField, setCopiedField] = useState(null);
 
+  // Email Provider state
+  const [activeProvider, setActiveProvider] = useState(null); // 'resend' or 'sendgrid'
+  const [emailProviderSettings, setEmailProviderSettings] = useState(null);
+  const [isLoadingProviders, setIsLoadingProviders] = useState(false);
+
   // Resend API Key state
   const [resendApiKey, setResendApiKey] = useState('');
   const [resendKeyStatus, setResendKeyStatus] = useState(null);
   const [isLoadingResendKey, setIsLoadingResendKey] = useState(false);
   const [isSavingResendKey, setIsSavingResendKey] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
+  const [showResendApiKey, setShowResendApiKey] = useState(false);
   const [resendDomains, setResendDomains] = useState([]);
+
+  // SendGrid API Key state
+  const [sendgridApiKey, setSendgridApiKey] = useState('');
+  const [sendgridKeyStatus, setSendgridKeyStatus] = useState(null);
+  const [isLoadingSendgridKey, setIsLoadingSendgridKey] = useState(false);
+  const [isSavingSendgridKey, setIsSavingSendgridKey] = useState(false);
+  const [showSendgridApiKey, setShowSendgridApiKey] = useState(false);
+  const [sendgridSenders, setSendgridSenders] = useState([]);
 
   useEffect(() => {
     if (user?.id) {
       loadDomains();
-      loadResendKeyStatus();
+      loadEmailProviderSettings();
     }
   }, [user?.id]);
 
@@ -84,21 +97,28 @@ function Settings() {
     }
   };
 
-  const loadResendKeyStatus = async () => {
-    setIsLoadingResendKey(true);
+  const loadEmailProviderSettings = async () => {
+    setIsLoadingProviders(true);
     try {
-      const result = await settingsApi.getResendStatus(user.id);
+      const result = await settingsApi.getEmailProviderSettings(user.id);
       if (result.success) {
-        setResendKeyStatus(result);
-        // If user has a verified key, load their domains
-        if (result.hasApiKey && result.verified) {
+        setEmailProviderSettings(result);
+        setActiveProvider(result.provider);
+        setResendKeyStatus(result.resend);
+        setSendgridKeyStatus(result.sendgrid);
+
+        // Load domains/senders for verified providers
+        if (result.resend?.hasApiKey && result.resend?.verified) {
           loadResendDomains();
+        }
+        if (result.sendgrid?.hasApiKey && result.sendgrid?.verified) {
+          loadSendgridSenders();
         }
       }
     } catch (err) {
-      console.error('Failed to load Resend key status:', err);
+      console.error('Failed to load email provider settings:', err);
     } finally {
-      setIsLoadingResendKey(false);
+      setIsLoadingProviders(false);
     }
   };
 
@@ -110,6 +130,17 @@ function Settings() {
       }
     } catch (err) {
       console.error('Failed to load Resend domains:', err);
+    }
+  };
+
+  const loadSendgridSenders = async () => {
+    try {
+      const result = await settingsApi.getSendGridSenders(user.id);
+      if (result.success) {
+        setSendgridSenders(result.senders || []);
+      }
+    } catch (err) {
+      console.error('Failed to load SendGrid senders:', err);
     }
   };
 
@@ -126,7 +157,7 @@ function Settings() {
       if (result.success) {
         setSuccess(result.message || 'Resend API key saved successfully!');
         setResendApiKey('');
-        await loadResendKeyStatus();
+        await loadEmailProviderSettings();
       } else {
         setError(result.error || 'Failed to save API key');
       }
@@ -147,7 +178,7 @@ function Settings() {
       if (result.success) {
         setSuccess(result.message || 'API key verified!');
         setResendDomains(result.domains || []);
-        await loadResendKeyStatus();
+        await loadEmailProviderSettings();
       } else {
         setError(result.error || 'Failed to verify API key');
       }
@@ -159,7 +190,7 @@ function Settings() {
   };
 
   const handleDeleteResendKey = async () => {
-    if (!confirm('Are you sure you want to remove your Resend API key? You will need to use the platform domains instead.')) {
+    if (!confirm('Are you sure you want to remove your Resend API key?')) {
       return;
     }
 
@@ -172,8 +203,90 @@ function Settings() {
         setSuccess('Resend API key removed.');
         setResendKeyStatus(null);
         setResendDomains([]);
+        await loadEmailProviderSettings();
       } else {
         setError(result.error || 'Failed to remove API key');
+      }
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  // SendGrid handlers
+  const handleSaveSendgridKey = async (e) => {
+    e.preventDefault();
+    if (!sendgridApiKey.trim()) return;
+
+    setIsSavingSendgridKey(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const result = await settingsApi.saveSendGridApiKey(user.id, sendgridApiKey.trim());
+      if (result.success) {
+        setSuccess(result.message || 'SendGrid API key saved successfully!');
+        setSendgridApiKey('');
+        await loadEmailProviderSettings();
+      } else {
+        setError(result.error || 'Failed to save API key');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSavingSendgridKey(false);
+    }
+  };
+
+  const handleVerifySendgridKey = async () => {
+    setIsSavingSendgridKey(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const result = await settingsApi.verifySendGridApiKey(user.id);
+      if (result.success) {
+        setSuccess(result.message || 'API key verified!');
+        setSendgridSenders(result.senders || []);
+        await loadEmailProviderSettings();
+      } else {
+        setError(result.error || 'Failed to verify API key');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSavingSendgridKey(false);
+    }
+  };
+
+  const handleDeleteSendgridKey = async () => {
+    if (!confirm('Are you sure you want to remove your SendGrid API key?')) {
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+
+    try {
+      const result = await settingsApi.deleteSendGridApiKey(user.id);
+      if (result.success) {
+        setSuccess('SendGrid API key removed.');
+        setSendgridKeyStatus(null);
+        setSendgridSenders([]);
+        await loadEmailProviderSettings();
+      } else {
+        setError(result.error || 'Failed to remove API key');
+      }
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleSetActiveProvider = async (provider) => {
+    try {
+      const result = await settingsApi.setEmailProvider(user.id, provider);
+      if (result.success) {
+        setActiveProvider(provider);
+        setSuccess(`Email provider set to ${provider === 'resend' ? 'Resend' : 'SendGrid'}`);
       }
     } catch (err) {
       setError(err.message);
@@ -403,174 +516,298 @@ function Settings() {
         </Alert>
       )}
 
-      {/* Resend API Key Section */}
+      {/* Email Providers Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Key className="h-5 w-5 text-primary" />
-            Resend API Key
+            <Mail className="h-5 w-5 text-primary" />
+            Email Provider
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Connect your own Resend account to send cold emails from your verified domains
+            Connect your email provider to send cold emails from your own verified domains/senders
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Current Status */}
-          {isLoadingResendKey ? (
-            <LoadingState message="Loading API key status..." />
-          ) : resendKeyStatus?.hasApiKey ? (
-            <div className="space-y-4">
-              {/* API Key Status Card */}
-              <div className={cn(
-                "border rounded-lg p-4",
-                resendKeyStatus.verified
-                  ? "border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-950/20"
-                  : "border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20"
-              )}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "p-2 rounded-lg",
-                      resendKeyStatus.verified ? "bg-green-100 dark:bg-green-900/50" : "bg-amber-100 dark:bg-amber-900/50"
-                    )}>
-                      <Shield className={cn(
-                        "h-5 w-5",
-                        resendKeyStatus.verified ? "text-green-600" : "text-amber-600"
-                      )} />
-                    </div>
-                    <div>
-                      <h3 className="font-medium">API Key Connected</h3>
-                      <p className="text-sm text-muted-foreground font-mono">
-                        {resendKeyStatus.maskedKey}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {resendKeyStatus.verified ? (
-                      <Badge variant="success" className="gap-1">
-                        <CheckCircle className="h-3 w-3" />
-                        Verified
-                      </Badge>
-                    ) : (
-                      <Badge variant="warning" className="gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        Not Verified
-                      </Badge>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleVerifyResendKey}
-                      disabled={isSavingResendKey}
-                    >
-                      {isSavingResendKey ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <RefreshCw className="h-4 w-4" />
-                      )}
-                      Verify
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleDeleteResendKey}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Show verified domains from user's Resend account */}
-                {resendKeyStatus.verified && resendDomains.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-green-200 dark:border-green-800">
-                    <p className="text-sm font-medium mb-2">Your Verified Domains:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {resendDomains
-                        .filter(d => d.status === 'verified')
-                        .map(domain => (
-                          <Badge key={domain.id} variant="secondary" className="gap-1">
-                            <CheckCircle className="h-3 w-3 text-green-600" />
-                            {domain.name}
-                          </Badge>
-                        ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      You can send cold emails from any address on these domains
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Option to update key */}
-              <div className="text-sm text-muted-foreground">
-                <p>Want to use a different API key? Enter it below to replace the current one.</p>
-              </div>
-            </div>
+          {isLoadingProviders ? (
+            <LoadingState message="Loading provider settings..." />
           ) : (
-            <div className="p-4 bg-muted/50 rounded-lg">
-              <div className="flex items-start gap-3">
-                <Key className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-medium">No API key configured</p>
-                  <p className="text-muted-foreground mt-1">
-                    Add your Resend API key to send cold emails from domains verified in your own Resend account.
-                    This allows you to use your existing domain setup without re-verifying here.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Add/Update API Key Form */}
-          <form onSubmit={handleSaveResendKey} className="space-y-3">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1 relative">
-                <Input
-                  type={showApiKey ? 'text' : 'password'}
-                  value={resendApiKey}
-                  onChange={(e) => setResendApiKey(e.target.value)}
-                  placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                  disabled={isSavingResendKey}
-                  className="pr-10 font-mono"
-                />
+            <>
+              {/* Provider Tabs */}
+              <div className="flex border-b">
                 <button
-                  type="button"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setActiveProvider('resend')}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+                    activeProvider === 'resend'
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  )}
                 >
-                  {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <div className="flex items-center gap-2">
+                    Resend
+                    {resendKeyStatus?.hasApiKey && resendKeyStatus?.verified && (
+                      <CheckCircle className="h-3 w-3 text-green-600" />
+                    )}
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveProvider('sendgrid')}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+                    activeProvider === 'sendgrid'
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    SendGrid
+                    {sendgridKeyStatus?.hasApiKey && sendgridKeyStatus?.verified && (
+                      <CheckCircle className="h-3 w-3 text-green-600" />
+                    )}
+                  </div>
                 </button>
               </div>
-              <Button type="submit" disabled={isSavingResendKey || !resendApiKey.trim()} className="w-full sm:w-auto">
-                {isSavingResendKey ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Key className="h-4 w-4" />
-                    {resendKeyStatus?.hasApiKey ? 'Update Key' : 'Save Key'}
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
 
-          {/* Help text */}
-          <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
-            <p className="font-medium mb-2">How to get your Resend API key:</p>
-            <ol className="list-decimal list-inside space-y-1">
-              <li>Go to <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">resend.com/api-keys</a></li>
-              <li>Click "Create API Key"</li>
-              <li>Give it a name (e.g., "ValidateCall") and copy the key</li>
-              <li>Paste it above and click Save</li>
-            </ol>
-            <p className="mt-3 text-xs">
-              Your API key is stored securely and only used to send emails on your behalf.
-            </p>
-          </div>
+              {/* Active Provider Indicator */}
+              {(resendKeyStatus?.hasApiKey || sendgridKeyStatus?.hasApiKey) && (
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <span className="text-sm">Active Provider:</span>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={emailProviderSettings?.provider ? "default" : "secondary"}>
+                      {emailProviderSettings?.provider === 'sendgrid' ? 'SendGrid' :
+                       emailProviderSettings?.provider === 'resend' ? 'Resend' : 'None'}
+                    </Badge>
+                    {resendKeyStatus?.hasApiKey && sendgridKeyStatus?.hasApiKey && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSetActiveProvider(
+                          emailProviderSettings?.provider === 'resend' ? 'sendgrid' : 'resend'
+                        )}
+                      >
+                        Switch to {emailProviderSettings?.provider === 'resend' ? 'SendGrid' : 'Resend'}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Resend Tab Content */}
+              {activeProvider === 'resend' && (
+                <div className="space-y-4">
+                  {resendKeyStatus?.hasApiKey ? (
+                    <div className={cn(
+                      "border rounded-lg p-4",
+                      resendKeyStatus.verified
+                        ? "border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-950/20"
+                        : "border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20"
+                    )}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "p-2 rounded-lg",
+                            resendKeyStatus.verified ? "bg-green-100 dark:bg-green-900/50" : "bg-amber-100 dark:bg-amber-900/50"
+                          )}>
+                            <Shield className={cn(
+                              "h-5 w-5",
+                              resendKeyStatus.verified ? "text-green-600" : "text-amber-600"
+                            )} />
+                          </div>
+                          <div>
+                            <h3 className="font-medium">Resend Connected</h3>
+                            <p className="text-sm text-muted-foreground font-mono">
+                              {resendKeyStatus.maskedKey}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {resendKeyStatus.verified ? (
+                            <Badge variant="success" className="gap-1">
+                              <CheckCircle className="h-3 w-3" />
+                              Verified
+                            </Badge>
+                          ) : (
+                            <Badge variant="warning" className="gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              Not Verified
+                            </Badge>
+                          )}
+                          <Button variant="outline" size="sm" onClick={handleVerifyResendKey} disabled={isSavingResendKey}>
+                            {isSavingResendKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={handleDeleteResendKey} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      {resendKeyStatus.verified && resendDomains.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-green-200 dark:border-green-800">
+                          <p className="text-sm font-medium mb-2">Verified Domains:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {resendDomains.filter(d => d.status === 'verified').map(domain => (
+                              <Badge key={domain.id} variant="secondary" className="gap-1">
+                                <CheckCircle className="h-3 w-3 text-green-600" />
+                                {domain.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-muted/50 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <Key className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div className="text-sm">
+                          <p className="font-medium">No Resend API key configured</p>
+                          <p className="text-muted-foreground mt-1">
+                            Add your Resend API key to send emails from your verified domains.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSaveResendKey} className="space-y-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="flex-1 relative">
+                        <Input
+                          type={showResendApiKey ? 'text' : 'password'}
+                          value={resendApiKey}
+                          onChange={(e) => setResendApiKey(e.target.value)}
+                          placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                          disabled={isSavingResendKey}
+                          className="pr-10 font-mono"
+                        />
+                        <button type="button" onClick={() => setShowResendApiKey(!showResendApiKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                          {showResendApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      <Button type="submit" disabled={isSavingResendKey || !resendApiKey.trim()}>
+                        {isSavingResendKey ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</> : <><Key className="h-4 w-4" /> {resendKeyStatus?.hasApiKey ? 'Update' : 'Save'}</>}
+                      </Button>
+                    </div>
+                  </form>
+
+                  <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
+                    <p className="font-medium mb-2">Get your Resend API key:</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Go to <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">resend.com/api-keys</a></li>
+                      <li>Create a new API key and paste it above</li>
+                    </ol>
+                  </div>
+                </div>
+              )}
+
+              {/* SendGrid Tab Content */}
+              {activeProvider === 'sendgrid' && (
+                <div className="space-y-4">
+                  {sendgridKeyStatus?.hasApiKey ? (
+                    <div className={cn(
+                      "border rounded-lg p-4",
+                      sendgridKeyStatus.verified
+                        ? "border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-950/20"
+                        : "border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20"
+                    )}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "p-2 rounded-lg",
+                            sendgridKeyStatus.verified ? "bg-green-100 dark:bg-green-900/50" : "bg-amber-100 dark:bg-amber-900/50"
+                          )}>
+                            <Shield className={cn(
+                              "h-5 w-5",
+                              sendgridKeyStatus.verified ? "text-green-600" : "text-amber-600"
+                            )} />
+                          </div>
+                          <div>
+                            <h3 className="font-medium">SendGrid Connected</h3>
+                            <p className="text-sm text-muted-foreground font-mono">
+                              {sendgridKeyStatus.maskedKey}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {sendgridKeyStatus.verified ? (
+                            <Badge variant="success" className="gap-1">
+                              <CheckCircle className="h-3 w-3" />
+                              Verified
+                            </Badge>
+                          ) : (
+                            <Badge variant="warning" className="gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              Not Verified
+                            </Badge>
+                          )}
+                          <Button variant="outline" size="sm" onClick={handleVerifySendgridKey} disabled={isSavingSendgridKey}>
+                            {isSavingSendgridKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={handleDeleteSendgridKey} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      {sendgridKeyStatus.verified && sendgridSenders.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-green-200 dark:border-green-800">
+                          <p className="text-sm font-medium mb-2">Verified Senders:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {sendgridSenders.filter(s => s.verified).map(sender => (
+                              <Badge key={sender.id} variant="secondary" className="gap-1">
+                                <CheckCircle className="h-3 w-3 text-green-600" />
+                                {sender.email}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-muted/50 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <Key className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div className="text-sm">
+                          <p className="font-medium">No SendGrid API key configured</p>
+                          <p className="text-muted-foreground mt-1">
+                            Add your SendGrid API key to send emails from your verified senders.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSaveSendgridKey} className="space-y-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="flex-1 relative">
+                        <Input
+                          type={showSendgridApiKey ? 'text' : 'password'}
+                          value={sendgridApiKey}
+                          onChange={(e) => setSendgridApiKey(e.target.value)}
+                          placeholder="SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                          disabled={isSavingSendgridKey}
+                          className="pr-10 font-mono"
+                        />
+                        <button type="button" onClick={() => setShowSendgridApiKey(!showSendgridApiKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                          {showSendgridApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      <Button type="submit" disabled={isSavingSendgridKey || !sendgridApiKey.trim()}>
+                        {isSavingSendgridKey ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</> : <><Key className="h-4 w-4" /> {sendgridKeyStatus?.hasApiKey ? 'Update' : 'Save'}</>}
+                      </Button>
+                    </div>
+                  </form>
+
+                  <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
+                    <p className="font-medium mb-2">Get your SendGrid API key:</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Go to <a href="https://app.sendgrid.com/settings/api_keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">sendgrid.com/api_keys</a></li>
+                      <li>Create an API key with "Mail Send" permissions</li>
+                      <li>Also verify a sender at <a href="https://app.sendgrid.com/settings/sender_auth/senders" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Sender Authentication</a></li>
+                    </ol>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -582,8 +819,8 @@ function Settings() {
             Email Domains
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            {resendKeyStatus?.hasApiKey && resendKeyStatus?.verified
-              ? 'Your domains are managed in your Resend account. You can still add domains here if needed.'
+            {(resendKeyStatus?.hasApiKey && resendKeyStatus?.verified) || (sendgridKeyStatus?.hasApiKey && sendgridKeyStatus?.verified)
+              ? 'Your domains/senders are managed in your email provider account. You can still add domains here if needed.'
               : 'Verify your domain to send cold emails from your own email address'}
           </p>
         </CardHeader>

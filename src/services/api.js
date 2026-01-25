@@ -546,10 +546,22 @@ export const domainsApi = {
 };
 
 // =============================================
-// USER SETTINGS - Resend API Key Management
+// USER SETTINGS - Email Provider API Key Management
 // =============================================
 
 export const settingsApi = {
+    // Get complete email provider settings (Resend + SendGrid)
+    getEmailProviderSettings: (userId) => apiRequest(`/api/settings/email-provider?userId=${userId}`),
+
+    // Set preferred email provider
+    setEmailProvider: (userId, provider) =>
+        apiRequest('/api/settings/email-provider', {
+            method: 'POST',
+            body: JSON.stringify({ userId, provider }),
+        }),
+
+    // --- Resend ---
+
     // Get user's Resend API key status (masked)
     getResendStatus: (userId) => apiRequest(`/api/settings/resend?userId=${userId}`),
 
@@ -575,6 +587,34 @@ export const settingsApi = {
 
     // Get user's verified domains from their Resend account
     getResendDomains: (userId) => apiRequest(`/api/settings/resend/domains?userId=${userId}`),
+
+    // --- SendGrid ---
+
+    // Get user's SendGrid API key status (masked)
+    getSendGridStatus: (userId) => apiRequest(`/api/settings/sendgrid?userId=${userId}`),
+
+    // Save user's SendGrid API key
+    saveSendGridApiKey: (userId, apiKey) =>
+        apiRequest('/api/settings/sendgrid', {
+            method: 'POST',
+            body: JSON.stringify({ userId, apiKey }),
+        }),
+
+    // Delete user's SendGrid API key
+    deleteSendGridApiKey: (userId) =>
+        apiRequest(`/api/settings/sendgrid?userId=${userId}`, {
+            method: 'DELETE',
+        }),
+
+    // Verify user's SendGrid API key works
+    verifySendGridApiKey: (userId) =>
+        apiRequest('/api/settings/sendgrid/verify', {
+            method: 'POST',
+            body: JSON.stringify({ userId }),
+        }),
+
+    // Get user's verified senders from their SendGrid account
+    getSendGridSenders: (userId) => apiRequest(`/api/settings/sendgrid/senders?userId=${userId}`),
 };
 
 // Format duration from seconds (utility function kept client-side)
