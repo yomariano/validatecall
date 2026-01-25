@@ -205,6 +205,8 @@ function Agents() {
     resetForm();
     setEditingAgent(null);
     setIsCreating(true);
+    // Scroll to top to show the editor
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // AI generation handler for agent text fields
@@ -317,6 +319,8 @@ Generate only the closing text, nothing else:`;
     });
     setEditingAgent(agent);
     setIsCreating(true);
+    // Scroll to top to show the editor
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCancel = () => {
