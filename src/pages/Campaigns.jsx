@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { vapiApi, claudeApi, emailApi, domainsApi } from '../services/api';
+import { vapiApi, claudeApi, emailApi, domainsApi, settingsApi } from '../services/api';
 import { getLeads, createCampaign, getCampaigns, saveCall } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useUsage } from '../context/UsageContext';
@@ -195,12 +195,33 @@ function Campaigns() {
       setLeads(leadsData);
 
       // Load verified domains for email sender
+      // Check both platform domains AND user's own Resend account domains
       if (user?.id) {
         try {
-          const domainsResult = await domainsApi.getVerified(user.id);
-          if (domainsResult.success) {
-            setVerifiedDomains(domainsResult.domains);
+          const allDomains = [];
+
+          // 1. Load platform-verified domains
+          const platformDomainsResult = await domainsApi.getVerified(user.id);
+          if (platformDomainsResult.success && platformDomainsResult.domains?.length > 0) {
+            allDomains.push(...platformDomainsResult.domains);
           }
+
+          // 2. Load domains from user's own Resend account (via their API key)
+          const resendDomainsResult = await settingsApi.getResendDomains(user.id);
+          if (resendDomainsResult.success && resendDomainsResult.domains?.length > 0) {
+            // Convert Resend domain format to match our format
+            const resendDomains = resendDomainsResult.domains
+              .filter(d => d.status === 'verified')
+              .map(d => ({ id: d.id, domainName: d.name }));
+            allDomains.push(...resendDomains);
+          }
+
+          // Remove duplicates by domain name
+          const uniqueDomains = allDomains.filter((domain, index, self) =>
+            index === self.findIndex(d => d.domainName === domain.domainName)
+          );
+
+          setVerifiedDomains(uniqueDomains);
         } catch {
           // Silently fail - domains are optional
         }
