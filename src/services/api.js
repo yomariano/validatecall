@@ -633,6 +633,32 @@ export const settingsApi = {
             method: 'POST',
             body: JSON.stringify({ userId, brandLogoUrl, brandColor, brandName }),
         }),
+
+    // Upload brand logo
+    uploadBrandLogo: async (userId, file) => {
+        const formData = new FormData();
+        formData.append('userId', userId);
+        formData.append('logo', file);
+
+        const response = await fetch(`${API_BASE_URL}/api/settings/brand/logo`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to upload logo');
+        }
+
+        return response.json();
+    },
+
+    // Delete brand logo
+    deleteBrandLogo: (userId) =>
+        apiRequest(`/api/settings/brand/logo?userId=${userId}`, {
+            method: 'DELETE',
+        }),
 };
 
 // Format duration from seconds (utility function kept client-side)

@@ -25,6 +25,8 @@ import {
   Palette,
   Image,
   Building2,
+  Upload,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -83,6 +85,7 @@ function Settings() {
   const [brandName, setBrandName] = useState('');
   const [isLoadingBrand, setIsLoadingBrand] = useState(false);
   const [isSavingBrand, setIsSavingBrand] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -192,6 +195,64 @@ function Settings() {
       setError(err.message);
     } finally {
       setIsSavingBrand(false);
+    }
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Logo file must be less than 2MB');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload an image file');
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const result = await settingsApi.uploadBrandLogo(user.id, file);
+      if (result.success) {
+        setBrandLogoUrl(result.logoUrl);
+        setSuccess('Logo uploaded successfully!');
+      } else {
+        setError(result.error || 'Failed to upload logo');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsUploadingLogo(false);
+      // Reset file input
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteLogo = async () => {
+    if (!confirm('Are you sure you want to delete your logo?')) return;
+
+    setIsUploadingLogo(true);
+    setError('');
+
+    try {
+      const result = await settingsApi.deleteBrandLogo(user.id);
+      if (result.success) {
+        setBrandLogoUrl('');
+        setSuccess('Logo deleted');
+      } else {
+        setError(result.error || 'Failed to delete logo');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsUploadingLogo(false);
     }
   };
 
@@ -1163,39 +1224,118 @@ function Settings() {
                 </p>
               </FormGroup>
 
-              {/* Logo URL */}
+              {/* Logo Upload */}
               <FormGroup>
                 <label className="text-sm font-medium flex items-center gap-2">
                   <Image className="h-4 w-4" />
-                  Logo URL
+                  Brand Logo
                 </label>
-                <Input
-                  value={brandLogoUrl}
-                  onChange={(e) => setBrandLogoUrl(e.target.value)}
-                  placeholder="https://yoursite.com/logo.png"
-                  disabled={isSavingBrand}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Direct link to your logo image. Recommended size: 200x50px, PNG or SVG with transparent background.
-                </p>
-                {brandLogoUrl && (
-                  <div className="mt-3 p-4 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-2">Preview:</p>
-                    <div
-                      className="p-4 rounded-lg text-center"
-                      style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)` }}
-                    >
-                      <img
-                        src={brandLogoUrl}
-                        alt="Logo preview"
-                        className="max-h-12 max-w-[200px] mx-auto"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
+
+                {/* Current logo preview / upload area */}
+                {brandLogoUrl ? (
+                  <div className="border-2 border-dashed border-border rounded-lg p-4">
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="p-4 rounded-lg flex-shrink-0"
+                        style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)` }}
+                      >
+                        <img
+                          src={brandLogoUrl}
+                          alt="Current logo"
+                          className="max-h-12 max-w-[150px]"
+                          onError={(e) => {
+                            e.target.src = '';
+                            e.target.alt = 'Failed to load';
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">Current Logo</p>
+                        <p className="text-xs text-muted-foreground truncate">{brandLogoUrl}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleLogoUpload}
+                            className="hidden"
+                            disabled={isUploadingLogo}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={isUploadingLogo}
+                            asChild
+                          >
+                            <span>
+                              {isUploadingLogo ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Upload className="h-4 w-4" />
+                              )}
+                              Replace
+                            </span>
+                          </Button>
+                        </label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleDeleteLogo}
+                          disabled={isUploadingLogo}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
+                ) : (
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                      disabled={isUploadingLogo}
+                    />
+                    <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 hover:bg-muted/50 transition-colors">
+                      {isUploadingLogo ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">Uploading...</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2">
+                          <Upload className="h-8 w-8 text-muted-foreground" />
+                          <p className="text-sm font-medium">Click to upload logo</p>
+                          <p className="text-xs text-muted-foreground">
+                            PNG, JPG, SVG up to 2MB. Recommended: 200x50px with transparent background
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </label>
                 )}
+
+                {/* Optional: manual URL input */}
+                <div className="mt-3">
+                  <details className="text-sm">
+                    <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                      Or enter logo URL manually
+                    </summary>
+                    <div className="mt-2">
+                      <Input
+                        value={brandLogoUrl}
+                        onChange={(e) => setBrandLogoUrl(e.target.value)}
+                        placeholder="https://yoursite.com/logo.png"
+                        disabled={isSavingBrand || isUploadingLogo}
+                      />
+                    </div>
+                  </details>
+                </div>
               </FormGroup>
 
               {/* Email Preview */}
