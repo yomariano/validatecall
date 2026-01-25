@@ -43,7 +43,8 @@ import {
   Check,
   Bot,
   Volume2,
-  Save
+  Save,
+  Send
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -126,6 +127,7 @@ function Campaigns() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingTemplates, setIsSavingTemplates] = useState(false);
+  const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
   const [isCalling, setIsCalling] = useState(false);
   const [callProgress, setCallProgress] = useState({ current: 0, total: 0, results: [] });
   const [error, setError] = useState('');
@@ -717,6 +719,70 @@ function Campaigns() {
     }
   };
 
+  // Send a test email with sample data to verify the template
+  const handleSendTestEmail = async () => {
+    if (!campaignEmailSubject.trim() || !campaignEmailBody.trim()) {
+      setError('Please create an email template first');
+      return;
+    }
+    if (!campaignSenderEmail.trim()) {
+      setError('Please select a sender email address');
+      return;
+    }
+
+    setIsSendingTestEmail(true);
+    setError('');
+    try {
+      // Replace placeholders with sample data
+      const sampleData = {
+        businessName: 'Sample Business',
+        city: 'New York',
+        industry: viewingCampaign?.leads?.[0]?.category || 'Business Services',
+      };
+
+      const personalizedSubject = campaignEmailSubject
+        .replace(/\{\{businessName\}\}/g, sampleData.businessName)
+        .replace(/\{\{city\}\}/g, sampleData.city)
+        .replace(/\{\{industry\}\}/g, sampleData.industry)
+        .replace(/\[Business Name\]/g, sampleData.businessName);
+
+      const personalizedBody = campaignEmailBody
+        .replace(/\{\{businessName\}\}/g, sampleData.businessName)
+        .replace(/\{\{city\}\}/g, sampleData.city)
+        .replace(/\{\{industry\}\}/g, sampleData.industry)
+        .replace(/\[Business Name\]/g, sampleData.businessName);
+
+      // Send test email to the user's email
+      const testEmail = user?.email;
+      if (!testEmail) {
+        setError('Could not determine your email address for test');
+        return;
+      }
+
+      const result = await emailApi.sendColdEmail({
+        leadId: null, // No lead for test emails
+        toEmail: testEmail,
+        toName: user?.user_metadata?.full_name || 'Test Recipient',
+        subject: `[TEST] ${personalizedSubject}`,
+        body: personalizedBody,
+        senderName: campaignSenderName || user?.user_metadata?.full_name || 'Sender',
+        senderEmail: campaignSenderEmail,
+        senderCompany: '',
+        userId: user?.id,
+      });
+
+      if (result.success) {
+        setSuccess(`Test email sent to ${testEmail}! Check your inbox.`);
+      } else {
+        setError(result.error || 'Failed to send test email');
+      }
+    } catch (err) {
+      setError(`Failed to send test email: ${err.message}`);
+    } finally {
+      setIsSendingTestEmail(false);
+    }
+  };
+
   // Show hard paywall if free tier call limit exhausted
   if (isFreeTier && shouldShowHardPaywall('calls')) {
     return (
@@ -1048,7 +1114,7 @@ function Campaigns() {
                     rows={5}
                     className="text-sm"
                   />
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <p className="text-xs text-muted-foreground">
                       <span className="font-medium">Dynamic variables:</span>{' '}
                       <code className="bg-muted px-1 rounded">{'{{businessName}}'}</code>{' '}
@@ -1059,6 +1125,28 @@ function Campaigns() {
                       <p className="text-xs text-muted-foreground">
                         This template will be personalized for each lead when sending.
                       </p>
+                    )}
+                    {/* Test Email Button */}
+                    {campaignEmailBody && campaignEmailSubject && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSendTestEmail}
+                        disabled={isSendingTestEmail || !campaignSenderEmail}
+                        className="gap-2 mt-2"
+                      >
+                        {isSendingTestEmail ? (
+                          <>
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-3 w-3" />
+                            Send Test Email to Me
+                          </>
+                        )}
+                      </Button>
                     )}
                   </div>
                 </div>
