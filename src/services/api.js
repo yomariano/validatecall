@@ -621,6 +621,18 @@ export const settingsApi = {
 
     // Get user's verified senders from their SendGrid account
     getSendGridSenders: (userId) => apiRequest(`/api/settings/sendgrid/senders?userId=${userId}`),
+
+    // --- Brand Settings ---
+
+    // Get user's brand settings (logo, color, company name)
+    getBrandSettings: (userId) => apiRequest(`/api/settings/brand?userId=${userId}`),
+
+    // Save user's brand settings
+    saveBrandSettings: (userId, { brandLogoUrl, brandColor, brandName }) =>
+        apiRequest('/api/settings/brand', {
+            method: 'POST',
+            body: JSON.stringify({ userId, brandLogoUrl, brandColor, brandName }),
+        }),
 };
 
 // Format duration from seconds (utility function kept client-side)

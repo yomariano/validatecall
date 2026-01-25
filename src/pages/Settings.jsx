@@ -22,6 +22,9 @@ import {
   Eye,
   EyeOff,
   Shield,
+  Palette,
+  Image,
+  Building2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -74,10 +77,18 @@ function Settings() {
   const [showSendgridApiKey, setShowSendgridApiKey] = useState(false);
   const [sendgridSenders, setSendgridSenders] = useState([]);
 
+  // Brand settings state
+  const [brandLogoUrl, setBrandLogoUrl] = useState('');
+  const [brandColor, setBrandColor] = useState('#6366f1');
+  const [brandName, setBrandName] = useState('');
+  const [isLoadingBrand, setIsLoadingBrand] = useState(false);
+  const [isSavingBrand, setIsSavingBrand] = useState(false);
+
   useEffect(() => {
     if (user?.id) {
       loadDomains();
       loadEmailProviderSettings();
+      loadBrandSettings();
     }
   }, [user?.id]);
 
@@ -141,6 +152,46 @@ function Settings() {
       }
     } catch (err) {
       console.error('Failed to load SendGrid senders:', err);
+    }
+  };
+
+  const loadBrandSettings = async () => {
+    setIsLoadingBrand(true);
+    try {
+      const result = await settingsApi.getBrandSettings(user.id);
+      if (result.success) {
+        setBrandLogoUrl(result.brandLogoUrl || '');
+        setBrandColor(result.brandColor || '#6366f1');
+        setBrandName(result.brandName || '');
+      }
+    } catch (err) {
+      console.error('Failed to load brand settings:', err);
+    } finally {
+      setIsLoadingBrand(false);
+    }
+  };
+
+  const handleSaveBrandSettings = async (e) => {
+    e.preventDefault();
+    setIsSavingBrand(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const result = await settingsApi.saveBrandSettings(user.id, {
+        brandLogoUrl: brandLogoUrl.trim() || null,
+        brandColor: brandColor || null,
+        brandName: brandName.trim() || null,
+      });
+      if (result.success) {
+        setSuccess('Brand settings saved successfully!');
+      } else {
+        setError(result.error || 'Failed to save brand settings');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSavingBrand(false);
     }
   };
 
@@ -1043,6 +1094,152 @@ function Settings() {
               <li>Click "Check" to verify - once verified, you can send from any @yourdomain.com address</li>
             </ol>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Brand Settings Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="h-5 w-5 text-primary" />
+            Email Branding
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Customize your cold email appearance with your logo and brand colors
+          </p>
+        </CardHeader>
+        <CardContent>
+          {isLoadingBrand ? (
+            <LoadingState message="Loading brand settings..." />
+          ) : (
+            <form onSubmit={handleSaveBrandSettings} className="space-y-6">
+              {/* Brand Name */}
+              <FormGroup>
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Company/Brand Name
+                </label>
+                <Input
+                  value={brandName}
+                  onChange={(e) => setBrandName(e.target.value)}
+                  placeholder="Your Company Name"
+                  disabled={isSavingBrand}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Displayed in the email header. If empty, we'll use your domain name.
+                </p>
+              </FormGroup>
+
+              {/* Brand Color */}
+              <FormGroup>
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Palette className="h-4 w-4" />
+                  Brand Color
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <input
+                      type="color"
+                      value={brandColor}
+                      onChange={(e) => setBrandColor(e.target.value)}
+                      className="w-12 h-10 rounded border border-border cursor-pointer"
+                      disabled={isSavingBrand}
+                    />
+                  </div>
+                  <Input
+                    value={brandColor}
+                    onChange={(e) => setBrandColor(e.target.value)}
+                    placeholder="#6366f1"
+                    className="font-mono w-32"
+                    disabled={isSavingBrand}
+                  />
+                  <div
+                    className="h-10 flex-1 rounded-lg"
+                    style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Used for email header, links, and accents. Pick a color that matches your brand.
+                </p>
+              </FormGroup>
+
+              {/* Logo URL */}
+              <FormGroup>
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Image className="h-4 w-4" />
+                  Logo URL
+                </label>
+                <Input
+                  value={brandLogoUrl}
+                  onChange={(e) => setBrandLogoUrl(e.target.value)}
+                  placeholder="https://yoursite.com/logo.png"
+                  disabled={isSavingBrand}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Direct link to your logo image. Recommended size: 200x50px, PNG or SVG with transparent background.
+                </p>
+                {brandLogoUrl && (
+                  <div className="mt-3 p-4 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-2">Preview:</p>
+                    <div
+                      className="p-4 rounded-lg text-center"
+                      style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)` }}
+                    >
+                      <img
+                        src={brandLogoUrl}
+                        alt="Logo preview"
+                        className="max-h-12 max-w-[200px] mx-auto"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </FormGroup>
+
+              {/* Email Preview */}
+              <div className="border rounded-lg overflow-hidden">
+                <div className="text-xs text-muted-foreground p-2 bg-muted/50 border-b">
+                  Email Header Preview
+                </div>
+                <div
+                  className="p-6 text-center"
+                  style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)` }}
+                >
+                  {brandLogoUrl ? (
+                    <img
+                      src={brandLogoUrl}
+                      alt="Logo"
+                      className="max-h-12 max-w-[200px] mx-auto mb-2"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <h2 className="text-xl font-semibold text-white">
+                      {brandName || 'Your Company'}
+                    </h2>
+                  )}
+                  <p className="text-white/80 text-sm">yourdomain.com</p>
+                </div>
+              </div>
+
+              <Button type="submit" disabled={isSavingBrand} className="w-full sm:w-auto">
+                {isSavingBrand ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Save Brand Settings
+                  </>
+                )}
+              </Button>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>
