@@ -476,6 +476,35 @@ export const emailApi = {
             method: 'POST',
             body: JSON.stringify({ userId, eventType, eventData, pageUrl }),
         }).catch(() => {}), // Silent fail - non-critical
+
+    // =============================================
+    // EMAIL RESPONSES - Inbound Email Handling
+    // =============================================
+
+    // Get all email responses (inbox)
+    getResponses: (status = 'all') =>
+        apiRequest(`/api/email/responses?status=${status}`),
+
+    // Get unread email count
+    getUnreadCount: () =>
+        apiRequest('/api/email/responses/unread-count'),
+
+    // Get email thread for a specific lead
+    getThread: (leadId) =>
+        apiRequest(`/api/email/thread/${leadId}`),
+
+    // Mark an email response as read
+    markAsRead: (responseId) =>
+        apiRequest(`/api/email/responses/${responseId}/read`, {
+            method: 'PATCH',
+        }),
+
+    // Reply to an email response
+    replyToEmail: ({ responseId, subject, body, senderName, senderEmail, senderCompany }) =>
+        apiRequest(`/api/email/responses/${responseId}/reply`, {
+            method: 'POST',
+            body: JSON.stringify({ subject, body, senderName, senderEmail, senderCompany }),
+        }),
 };
 
 // =============================================
@@ -514,6 +543,38 @@ export const domainsApi = {
         apiRequest(`/api/domains/${domainId}?userId=${userId}`, {
             method: 'DELETE',
         }),
+};
+
+// =============================================
+// USER SETTINGS - Resend API Key Management
+// =============================================
+
+export const settingsApi = {
+    // Get user's Resend API key status (masked)
+    getResendStatus: (userId) => apiRequest(`/api/settings/resend?userId=${userId}`),
+
+    // Save user's Resend API key
+    saveResendApiKey: (userId, apiKey) =>
+        apiRequest('/api/settings/resend', {
+            method: 'POST',
+            body: JSON.stringify({ userId, apiKey }),
+        }),
+
+    // Delete user's Resend API key
+    deleteResendApiKey: (userId) =>
+        apiRequest(`/api/settings/resend?userId=${userId}`, {
+            method: 'DELETE',
+        }),
+
+    // Verify user's Resend API key works
+    verifyResendApiKey: (userId) =>
+        apiRequest('/api/settings/resend/verify', {
+            method: 'POST',
+            body: JSON.stringify({ userId }),
+        }),
+
+    // Get user's verified domains from their Resend account
+    getResendDomains: (userId) => apiRequest(`/api/settings/resend/domains?userId=${userId}`),
 };
 
 // Format duration from seconds (utility function kept client-side)
@@ -648,6 +709,7 @@ export default {
     usageApi,
     emailApi,
     domainsApi,
+    settingsApi,
     adminApi,
     isLeadsConfigured,
     isSupabaseConfigured,

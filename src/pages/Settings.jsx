@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { domainsApi } from '../services/api';
+import { domainsApi, settingsApi } from '../services/api';
 import {
   Settings as SettingsIcon,
   Globe,
@@ -18,6 +18,10 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
+  Key,
+  Eye,
+  EyeOff,
+  Shield,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -49,9 +53,18 @@ function Settings() {
   // Copy state
   const [copiedField, setCopiedField] = useState(null);
 
+  // Resend API Key state
+  const [resendApiKey, setResendApiKey] = useState('');
+  const [resendKeyStatus, setResendKeyStatus] = useState(null);
+  const [isLoadingResendKey, setIsLoadingResendKey] = useState(false);
+  const [isSavingResendKey, setIsSavingResendKey] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [resendDomains, setResendDomains] = useState([]);
+
   useEffect(() => {
     if (user?.id) {
       loadDomains();
+      loadResendKeyStatus();
     }
   }, [user?.id]);
 
@@ -68,6 +81,102 @@ function Settings() {
       setError(err.message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadResendKeyStatus = async () => {
+    setIsLoadingResendKey(true);
+    try {
+      const result = await settingsApi.getResendStatus(user.id);
+      if (result.success) {
+        setResendKeyStatus(result);
+        // If user has a verified key, load their domains
+        if (result.hasApiKey && result.verified) {
+          loadResendDomains();
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load Resend key status:', err);
+    } finally {
+      setIsLoadingResendKey(false);
+    }
+  };
+
+  const loadResendDomains = async () => {
+    try {
+      const result = await settingsApi.getResendDomains(user.id);
+      if (result.success) {
+        setResendDomains(result.domains || []);
+      }
+    } catch (err) {
+      console.error('Failed to load Resend domains:', err);
+    }
+  };
+
+  const handleSaveResendKey = async (e) => {
+    e.preventDefault();
+    if (!resendApiKey.trim()) return;
+
+    setIsSavingResendKey(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const result = await settingsApi.saveResendApiKey(user.id, resendApiKey.trim());
+      if (result.success) {
+        setSuccess(result.message || 'Resend API key saved successfully!');
+        setResendApiKey('');
+        await loadResendKeyStatus();
+      } else {
+        setError(result.error || 'Failed to save API key');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSavingResendKey(false);
+    }
+  };
+
+  const handleVerifyResendKey = async () => {
+    setIsSavingResendKey(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const result = await settingsApi.verifyResendApiKey(user.id);
+      if (result.success) {
+        setSuccess(result.message || 'API key verified!');
+        setResendDomains(result.domains || []);
+        await loadResendKeyStatus();
+      } else {
+        setError(result.error || 'Failed to verify API key');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSavingResendKey(false);
+    }
+  };
+
+  const handleDeleteResendKey = async () => {
+    if (!confirm('Are you sure you want to remove your Resend API key? You will need to use the platform domains instead.')) {
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+
+    try {
+      const result = await settingsApi.deleteResendApiKey(user.id);
+      if (result.success) {
+        setSuccess('Resend API key removed.');
+        setResendKeyStatus(null);
+        setResendDomains([]);
+      } else {
+        setError(result.error || 'Failed to remove API key');
+      }
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -294,6 +403,177 @@ function Settings() {
         </Alert>
       )}
 
+      {/* Resend API Key Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Key className="h-5 w-5 text-primary" />
+            Resend API Key
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Connect your own Resend account to send cold emails from your verified domains
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Current Status */}
+          {isLoadingResendKey ? (
+            <LoadingState message="Loading API key status..." />
+          ) : resendKeyStatus?.hasApiKey ? (
+            <div className="space-y-4">
+              {/* API Key Status Card */}
+              <div className={cn(
+                "border rounded-lg p-4",
+                resendKeyStatus.verified
+                  ? "border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-950/20"
+                  : "border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20"
+              )}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "p-2 rounded-lg",
+                      resendKeyStatus.verified ? "bg-green-100 dark:bg-green-900/50" : "bg-amber-100 dark:bg-amber-900/50"
+                    )}>
+                      <Shield className={cn(
+                        "h-5 w-5",
+                        resendKeyStatus.verified ? "text-green-600" : "text-amber-600"
+                      )} />
+                    </div>
+                    <div>
+                      <h3 className="font-medium">API Key Connected</h3>
+                      <p className="text-sm text-muted-foreground font-mono">
+                        {resendKeyStatus.maskedKey}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {resendKeyStatus.verified ? (
+                      <Badge variant="success" className="gap-1">
+                        <CheckCircle className="h-3 w-3" />
+                        Verified
+                      </Badge>
+                    ) : (
+                      <Badge variant="warning" className="gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        Not Verified
+                      </Badge>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleVerifyResendKey}
+                      disabled={isSavingResendKey}
+                    >
+                      {isSavingResendKey ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4" />
+                      )}
+                      Verify
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleDeleteResendKey}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Show verified domains from user's Resend account */}
+                {resendKeyStatus.verified && resendDomains.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-green-200 dark:border-green-800">
+                    <p className="text-sm font-medium mb-2">Your Verified Domains:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {resendDomains
+                        .filter(d => d.status === 'verified')
+                        .map(domain => (
+                          <Badge key={domain.id} variant="secondary" className="gap-1">
+                            <CheckCircle className="h-3 w-3 text-green-600" />
+                            {domain.name}
+                          </Badge>
+                        ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      You can send cold emails from any address on these domains
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Option to update key */}
+              <div className="text-sm text-muted-foreground">
+                <p>Want to use a different API key? Enter it below to replace the current one.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-start gap-3">
+                <Key className="h-5 w-5 text-muted-foreground mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium">No API key configured</p>
+                  <p className="text-muted-foreground mt-1">
+                    Add your Resend API key to send cold emails from domains verified in your own Resend account.
+                    This allows you to use your existing domain setup without re-verifying here.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Add/Update API Key Form */}
+          <form onSubmit={handleSaveResendKey} className="space-y-3">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 relative">
+                <Input
+                  type={showApiKey ? 'text' : 'password'}
+                  value={resendApiKey}
+                  onChange={(e) => setResendApiKey(e.target.value)}
+                  placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  disabled={isSavingResendKey}
+                  className="pr-10 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <Button type="submit" disabled={isSavingResendKey || !resendApiKey.trim()} className="w-full sm:w-auto">
+                {isSavingResendKey ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Key className="h-4 w-4" />
+                    {resendKeyStatus?.hasApiKey ? 'Update Key' : 'Save Key'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+
+          {/* Help text */}
+          <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
+            <p className="font-medium mb-2">How to get your Resend API key:</p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>Go to <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">resend.com/api-keys</a></li>
+              <li>Click "Create API Key"</li>
+              <li>Give it a name (e.g., "ValidateCall") and copy the key</li>
+              <li>Paste it above and click Save</li>
+            </ol>
+            <p className="mt-3 text-xs">
+              Your API key is stored securely and only used to send emails on your behalf.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Email Domains Section */}
       <Card>
         <CardHeader>
@@ -302,7 +582,9 @@ function Settings() {
             Email Domains
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Verify your domain to send cold emails from your own email address
+            {resendKeyStatus?.hasApiKey && resendKeyStatus?.verified
+              ? 'Your domains are managed in your Resend account. You can still add domains here if needed.'
+              : 'Verify your domain to send cold emails from your own email address'}
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
