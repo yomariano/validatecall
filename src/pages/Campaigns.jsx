@@ -410,6 +410,10 @@ function Campaigns() {
       callResults: [],
     });
     setActiveTab('detail');
+
+    // Scroll to top and show feedback
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setSuccess(`Campaign "${campaign.name}" is now active! Click "Call All" to start calling ${campaignLeads.length} leads.`);
   };
 
   // Save campaign templates
