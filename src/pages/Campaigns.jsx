@@ -44,7 +44,9 @@ import {
   Bot,
   Volume2,
   Save,
-  Send
+  Send,
+  Link,
+  MousePointer
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -97,6 +99,8 @@ function Campaigns() {
   const [campaignEmailBody, setCampaignEmailBody] = useState('');
   const [campaignSenderEmail, setCampaignSenderEmail] = useState('');
   const [campaignSenderName, setCampaignSenderName] = useState('');
+  const [campaignCtaText, setCampaignCtaText] = useState('');
+  const [campaignCtaUrl, setCampaignCtaUrl] = useState('');
   const [isGeneratingPitch, setIsGeneratingPitch] = useState(false);
   const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
 
@@ -328,6 +332,8 @@ function Campaigns() {
         senderEmail: campaignSenderEmail || null,
         emailSubject: campaignEmailSubject || null,
         emailBody: campaignEmailBody || null,
+        ctaText: campaignCtaText || null,
+        ctaUrl: campaignCtaUrl || null,
       });
 
       CampaignEvents.created(selectedLeadIds.length, !!selectedAgentId);
@@ -343,6 +349,8 @@ function Campaigns() {
       setCampaignEmailBody('');
       setCampaignSenderEmail('');
       setCampaignSenderName('');
+      setCampaignCtaText('');
+      setCampaignCtaUrl('');
       clearFilters();
 
       // Refresh and switch to active campaigns
@@ -372,6 +380,8 @@ function Campaigns() {
     setCampaignSenderEmail(campaign.sender_email || '');
     setCampaignEmailSubject(campaign.email_subject || '');
     setCampaignEmailBody(campaign.email_body || '');
+    setCampaignCtaText(campaign.cta_text || '');
+    setCampaignCtaUrl(campaign.cta_url || '');
 
     setViewingCampaign({
       ...campaign,
@@ -400,6 +410,8 @@ function Campaigns() {
     setCampaignSenderEmail(campaign.sender_email || '');
     setCampaignEmailSubject(campaign.email_subject || '');
     setCampaignEmailBody(campaign.email_body || '');
+    setCampaignCtaText(campaign.cta_text || '');
+    setCampaignCtaUrl(campaign.cta_url || '');
 
     setActiveCampaign({
       ...campaign,
@@ -434,6 +446,8 @@ function Campaigns() {
         sender_email: campaignSenderEmail || null,
         email_subject: campaignEmailSubject || null,
         email_body: campaignEmailBody || null,
+        cta_text: campaignCtaText || null,
+        cta_url: campaignCtaUrl || null,
       });
 
       // Update the viewing campaign with new values
@@ -818,6 +832,8 @@ function Campaigns() {
             setCampaignEmailBody('');
             setCampaignSenderEmail('');
             setCampaignSenderName('');
+            setCampaignCtaText('');
+            setCampaignCtaUrl('');
             setActiveTab('active');
           }}
           className="mb-4"
@@ -1150,6 +1166,47 @@ function Campaigns() {
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* CTA Button */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <MousePointer className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">Call-to-Action Button (Optional)</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Add a button to your emails that links to your website, booking page, or any URL
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Button Text</label>
+                    <Input
+                      value={campaignCtaText}
+                      onChange={(e) => setCampaignCtaText(e.target.value)}
+                      placeholder="e.g., Visit Our Website"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Button URL</label>
+                    <div className="relative">
+                      <Link className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={campaignCtaUrl}
+                        onChange={(e) => setCampaignCtaUrl(e.target.value)}
+                        placeholder="https://yoursite.com"
+                        className="pl-10 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+                {campaignCtaText && campaignCtaUrl && (
+                  <div className="p-3 bg-muted/50 rounded-lg text-center">
+                    <span className="inline-block bg-primary text-primary-foreground font-medium text-sm py-2 px-5 rounded-md">
+                      {campaignCtaText}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Save Campaign Button */}
@@ -1908,6 +1965,8 @@ function Campaigns() {
           senderEmail: campaignSenderEmail,
           senderName: campaignSenderName,
           selectedAgentId: selectedAgentId,
+          ctaText: campaignCtaText,
+          ctaUrl: campaignCtaUrl,
         }}
       />
 

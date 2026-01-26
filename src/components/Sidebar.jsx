@@ -19,7 +19,8 @@ import {
   Settings,
   Shield,
   X,
-  Mail
+  Mail,
+  Workflow,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -33,8 +34,11 @@ const navItems = [
   { to: '/leads', icon: Users, label: 'Find Leads', step: 1 },
   { to: '/agents', icon: Bot, label: 'Voice Agents' },
   { to: '/campaigns', icon: PhoneCall, label: 'Campaigns', step: 2 },
+  { to: '/sequences', icon: Mail, label: 'Email Sequences' },
+  { to: '/workflows', icon: Workflow, label: 'Workflows' },
   { to: '/inbox', icon: Mail, label: 'Email Inbox' },
-  { to: '/history', icon: BarChart3, label: 'Analytics' },
+  { to: '/email-analytics', icon: BarChart3, label: 'Email Analytics' },
+  { to: '/history', icon: BarChart3, label: 'Call Analytics' },
   { to: '/billing', icon: CreditCard, label: 'Plans & Billing' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];

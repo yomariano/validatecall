@@ -338,6 +338,8 @@ export default function LeadActionPanel({
         senderEmail: campaignDefaults.senderEmail || undefined,
         senderCompany: companyContext.trim() ? companyContext.split('.')[0] : undefined,
         userId: user?.id,
+        ctaText: campaignDefaults.ctaText || undefined,
+        ctaUrl: campaignDefaults.ctaUrl || undefined,
       });
       if (result.success) {
         setEmailStatus('✅ Email sent successfully!');

@@ -470,10 +470,10 @@ export const emailApi = {
         }),
 
     // Send cold email to a lead
-    sendColdEmail: ({ leadId, toEmail, toName, subject, body, senderName, senderEmail, senderCompany, userId }) =>
+    sendColdEmail: ({ leadId, toEmail, toName, subject, body, senderName, senderEmail, senderCompany, userId, ctaText, ctaUrl }) =>
         apiRequest('/api/email/send-cold-email', {
             method: 'POST',
-            body: JSON.stringify({ leadId, toEmail, toName, subject, body, senderName, senderEmail, senderCompany, userId }),
+            body: JSON.stringify({ leadId, toEmail, toName, subject, body, senderName, senderEmail, senderCompany, userId, ctaText, ctaUrl }),
         }),
 
     // Track user events for marketing automation
@@ -511,6 +511,223 @@ export const emailApi = {
             method: 'POST',
             body: JSON.stringify({ subject, body, senderName, senderEmail, senderCompany }),
         }),
+};
+
+// =============================================
+// SEQUENCES - Multi-step Email Sequences
+// =============================================
+
+export const sequencesApi = {
+    // List all sequences
+    list: (userId) =>
+        apiRequest('/api/sequences', {
+            headers: { 'x-user-id': userId }
+        }),
+
+    // Create a new sequence
+    create: (userId, sequence) =>
+        apiRequest('/api/sequences', {
+            method: 'POST',
+            headers: { 'x-user-id': userId },
+            body: JSON.stringify(sequence),
+        }),
+
+    // Get sequence details
+    get: (userId, sequenceId) =>
+        apiRequest(`/api/sequences/${sequenceId}`, {
+            headers: { 'x-user-id': userId }
+        }),
+
+    // Update sequence
+    update: (userId, sequenceId, updates) =>
+        apiRequest(`/api/sequences/${sequenceId}`, {
+            method: 'PATCH',
+            headers: { 'x-user-id': userId },
+            body: JSON.stringify(updates),
+        }),
+
+    // Delete sequence
+    delete: (userId, sequenceId) =>
+        apiRequest(`/api/sequences/${sequenceId}`, {
+            method: 'DELETE',
+            headers: { 'x-user-id': userId }
+        }),
+
+    // Activate sequence and enroll leads
+    activate: (userId, sequenceId, leadIds = []) =>
+        apiRequest(`/api/sequences/${sequenceId}/activate`, {
+            method: 'POST',
+            headers: { 'x-user-id': userId },
+            body: JSON.stringify({ leadIds }),
+        }),
+
+    // Pause sequence
+    pause: (userId, sequenceId) =>
+        apiRequest(`/api/sequences/${sequenceId}/pause`, {
+            method: 'POST',
+            headers: { 'x-user-id': userId }
+        }),
+
+    // Resume sequence
+    resume: (userId, sequenceId) =>
+        apiRequest(`/api/sequences/${sequenceId}/resume`, {
+            method: 'POST',
+            headers: { 'x-user-id': userId }
+        }),
+
+    // Get sequence analytics
+    getAnalytics: (userId, sequenceId) =>
+        apiRequest(`/api/sequences/${sequenceId}/analytics`, {
+            headers: { 'x-user-id': userId }
+        }),
+
+    // Get enrollments
+    getEnrollments: (userId, sequenceId, { status, page, limit } = {}) => {
+        const params = new URLSearchParams();
+        if (status) params.append('status', status);
+        if (page) params.append('page', page);
+        if (limit) params.append('limit', limit);
+        const query = params.toString();
+        return apiRequest(`/api/sequences/${sequenceId}/enrollments${query ? `?${query}` : ''}`, {
+            headers: { 'x-user-id': userId }
+        });
+    },
+
+    // Stop an enrollment
+    stopEnrollment: (userId, sequenceId, enrollmentId, reason) =>
+        apiRequest(`/api/sequences/${sequenceId}/enrollments/${enrollmentId}/stop`, {
+            method: 'POST',
+            headers: { 'x-user-id': userId },
+            body: JSON.stringify({ reason }),
+        }),
+
+    // Resume an enrollment
+    resumeEnrollment: (userId, sequenceId, enrollmentId) =>
+        apiRequest(`/api/sequences/${sequenceId}/enrollments/${enrollmentId}/resume`, {
+            method: 'POST',
+            headers: { 'x-user-id': userId }
+        }),
+};
+
+// =============================================
+// WORKFLOWS - Multi-channel Outreach (Email + Calls)
+// =============================================
+
+export const workflowsApi = {
+    // List all workflows
+    list: (userId) =>
+        apiRequest('/api/workflows', {
+            headers: { 'x-user-id': userId }
+        }),
+
+    // Create a new workflow
+    create: (userId, workflow) =>
+        apiRequest('/api/workflows', {
+            method: 'POST',
+            headers: { 'x-user-id': userId },
+            body: JSON.stringify(workflow),
+        }),
+
+    // Get workflow details
+    get: (userId, workflowId) =>
+        apiRequest(`/api/workflows/${workflowId}`, {
+            headers: { 'x-user-id': userId }
+        }),
+
+    // Update workflow
+    update: (userId, workflowId, updates) =>
+        apiRequest(`/api/workflows/${workflowId}`, {
+            method: 'PATCH',
+            headers: { 'x-user-id': userId },
+            body: JSON.stringify(updates),
+        }),
+
+    // Delete workflow
+    delete: (userId, workflowId) =>
+        apiRequest(`/api/workflows/${workflowId}`, {
+            method: 'DELETE',
+            headers: { 'x-user-id': userId }
+        }),
+
+    // Activate workflow and enroll leads
+    activate: (userId, workflowId, leadIds = []) =>
+        apiRequest(`/api/workflows/${workflowId}/activate`, {
+            method: 'POST',
+            headers: { 'x-user-id': userId },
+            body: JSON.stringify({ leadIds }),
+        }),
+
+    // Pause workflow
+    pause: (userId, workflowId) =>
+        apiRequest(`/api/workflows/${workflowId}/pause`, {
+            method: 'POST',
+            headers: { 'x-user-id': userId }
+        }),
+
+    // Resume workflow
+    resume: (userId, workflowId) =>
+        apiRequest(`/api/workflows/${workflowId}/resume`, {
+            method: 'POST',
+            headers: { 'x-user-id': userId }
+        }),
+
+    // Get workflow analytics
+    getAnalytics: (userId, workflowId) =>
+        apiRequest(`/api/workflows/${workflowId}/analytics`, {
+            headers: { 'x-user-id': userId }
+        }),
+
+    // Get enrollments
+    getEnrollments: (userId, workflowId, { status, page, limit } = {}) => {
+        const params = new URLSearchParams();
+        if (status) params.append('status', status);
+        if (page) params.append('page', page);
+        if (limit) params.append('limit', limit);
+        const query = params.toString();
+        return apiRequest(`/api/workflows/${workflowId}/enrollments${query ? `?${query}` : ''}`, {
+            headers: { 'x-user-id': userId }
+        });
+    },
+};
+
+// =============================================
+// EMAIL TRACKING - Analytics & Events
+// =============================================
+
+export const emailTrackingApi = {
+    // Get overall email analytics
+    getAnalytics: (userId, { startDate, endDate } = {}) => {
+        const params = new URLSearchParams();
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        const query = params.toString();
+        return apiRequest(`/api/email-tracking/analytics${query ? `?${query}` : ''}`, {
+            headers: { 'x-user-id': userId }
+        });
+    },
+
+    // Get time-series data for charts
+    getTimeseries: (userId, { startDate, endDate, interval } = {}) => {
+        const params = new URLSearchParams();
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        if (interval) params.append('interval', interval);
+        const query = params.toString();
+        return apiRequest(`/api/email-tracking/analytics/timeseries${query ? `?${query}` : ''}`, {
+            headers: { 'x-user-id': userId }
+        });
+    },
+
+    // Get recent tracking events
+    getRecentEvents: (userId, { limit, eventType } = {}) => {
+        const params = new URLSearchParams();
+        if (limit) params.append('limit', limit);
+        if (eventType) params.append('eventType', eventType);
+        const query = params.toString();
+        return apiRequest(`/api/email-tracking/recent${query ? `?${query}` : ''}`, {
+            headers: { 'x-user-id': userId }
+        });
+    },
 };
 
 // =============================================
@@ -795,6 +1012,9 @@ export default {
     domainsApi,
     settingsApi,
     adminApi,
+    sequencesApi,
+    emailTrackingApi,
+    workflowsApi,
     isLeadsConfigured,
     isSupabaseConfigured,
     isVapiConfigured,

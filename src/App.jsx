@@ -18,6 +18,9 @@ import Pricing from './pages/Pricing';
 import Settings from './pages/Settings';
 import Admin from './pages/Admin';
 import Inbox from './pages/Inbox';
+import Sequences from './pages/Sequences';
+import Workflows from './pages/Workflows';
+import EmailAnalytics from './pages/EmailAnalytics';
 import { trackRouteChange } from '@/lib/analytics';
 import './App.css';
 
@@ -64,6 +67,9 @@ function App() {
             <Route path="/billing" element={<ProtectedLayout><Pricing /></ProtectedLayout>} />
             <Route path="/settings" element={<ProtectedLayout><Settings /></ProtectedLayout>} />
             <Route path="/inbox" element={<ProtectedLayout><Inbox /></ProtectedLayout>} />
+            <Route path="/sequences" element={<ProtectedLayout><Sequences /></ProtectedLayout>} />
+            <Route path="/workflows" element={<ProtectedLayout><Workflows /></ProtectedLayout>} />
+            <Route path="/email-analytics" element={<ProtectedLayout><EmailAnalytics /></ProtectedLayout>} />
             <Route path="/admin" element={<ProtectedLayout><Admin /></ProtectedLayout>} />
 
             {/* Catch-all redirect */}
