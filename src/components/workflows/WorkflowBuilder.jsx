@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { workflowsApi } from '../../services/api';
+import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
+import UnsavedChangesDialog from '../ui/UnsavedChangesDialog';
 import {
   ArrowLeft,
   Plus,
@@ -126,6 +128,12 @@ function WorkflowBuilder({ workflow, campaigns, assistants, userId, onBack, onSa
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
 
+  // Track unsaved changes
+  const { hasChanges, setHasChanges, blocker } = useUnsavedChanges(false);
+
+  // Mark as dirty when any field changes
+  const markDirty = () => setHasChanges(true);
+
   // Add a new step
   const addStep = (stepType = 'email') => {
     const newStep = {
@@ -145,12 +153,14 @@ function WorkflowBuilder({ workflow, campaigns, assistants, userId, onBack, onSa
     };
 
     setSteps(prev => [...prev.map(s => ({ ...s, expanded: false })), newStep]);
+    markDirty();
   };
 
   // Remove a step
   const removeStep = (index) => {
     if (steps.length <= 1) return;
     setSteps(prev => prev.filter((_, i) => i !== index));
+    markDirty();
   };
 
   // Update a step
@@ -158,9 +168,10 @@ function WorkflowBuilder({ workflow, campaigns, assistants, userId, onBack, onSa
     setSteps(prev => prev.map((step, i) =>
       i === index ? { ...step, ...updates } : step
     ));
+    markDirty();
   };
 
-  // Toggle step expansion
+  // Toggle step expansion (doesn't need to mark dirty - just UI state)
   const toggleStep = (index) => {
     setSteps(prev => prev.map((step, i) => ({
       ...step,
@@ -175,6 +186,7 @@ function WorkflowBuilder({ workflow, campaigns, assistants, userId, onBack, onSa
         ? prev.filter(d => d !== day)
         : [...prev, day].sort()
     );
+    markDirty();
   };
 
   // Get step type config
@@ -248,6 +260,7 @@ function WorkflowBuilder({ workflow, campaigns, assistants, userId, onBack, onSa
         await workflowsApi.create(userId, workflowData);
       }
 
+      setHasChanges(false); // Clear dirty state after successful save
       onSave?.();
     } catch (err) {
       setError(err.message || 'Failed to save workflow');
@@ -259,14 +272,30 @@ function WorkflowBuilder({ workflow, campaigns, assistants, userId, onBack, onSa
   // Calculate total duration
   const totalDays = steps.reduce((sum, s, i) => sum + (i === 0 ? 0 : s.delayDays), 0);
 
+  // Handle back button with unsaved changes check
+  const handleBack = () => {
+    if (hasChanges) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+        setHasChanges(false);
+        onBack();
+      }
+    } else {
+      onBack();
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Unsaved Changes Dialog */}
+      <UnsavedChangesDialog blocker={blocker} />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={onBack} className="gap-2">
+          <Button variant="ghost" onClick={handleBack} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back
+            {hasChanges && <span className="w-2 h-2 bg-yellow-500 rounded-full" />}
           </Button>
           <div>
             <h1 className="text-2xl font-bold">

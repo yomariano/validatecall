@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { sequencesApi } from '../../services/api';
+import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
+import UnsavedChangesDialog from '../ui/UnsavedChangesDialog';
 import {
   ArrowLeft,
   Plus,
@@ -98,6 +100,10 @@ function SequenceBuilder({ sequence, campaigns, userId, onBack, onSave, onActiva
   const [error, setError] = useState('');
   const [activeStepIndex, setActiveStepIndex] = useState(0);
 
+  // Track unsaved changes
+  const { hasChanges, setHasChanges, blocker } = useUnsavedChanges(false);
+  const markDirty = () => setHasChanges(true);
+
   // Add a new step
   const addStep = () => {
     const newStep = {
@@ -114,6 +120,7 @@ function SequenceBuilder({ sequence, campaigns, userId, onBack, onSave, onActiva
     // Collapse all other steps
     setSteps(prev => [...prev.map(s => ({ ...s, expanded: false })), newStep]);
     setActiveStepIndex(steps.length);
+    markDirty();
   };
 
   // Remove a step
@@ -123,6 +130,7 @@ function SequenceBuilder({ sequence, campaigns, userId, onBack, onSave, onActiva
     if (activeStepIndex >= index && activeStepIndex > 0) {
       setActiveStepIndex(activeStepIndex - 1);
     }
+    markDirty();
   };
 
   // Update a step
@@ -130,9 +138,10 @@ function SequenceBuilder({ sequence, campaigns, userId, onBack, onSave, onActiva
     setSteps(prev => prev.map((step, i) =>
       i === index ? { ...step, ...updates } : step
     ));
+    markDirty();
   };
 
-  // Toggle step expansion
+  // Toggle step expansion (doesn't need to mark dirty - just UI state)
   const toggleStep = (index) => {
     setSteps(prev => prev.map((step, i) => ({
       ...step,
@@ -148,6 +157,7 @@ function SequenceBuilder({ sequence, campaigns, userId, onBack, onSave, onActiva
         ? prev.filter(d => d !== day)
         : [...prev, day].sort()
     );
+    markDirty();
   };
 
   // Save sequence
@@ -193,6 +203,7 @@ function SequenceBuilder({ sequence, campaigns, userId, onBack, onSave, onActiva
         await sequencesApi.create(userId, sequenceData);
       }
 
+      setHasChanges(false); // Clear dirty state after successful save
       onSave?.();
     } catch (err) {
       setError(err.message || 'Failed to save sequence');
@@ -201,17 +212,33 @@ function SequenceBuilder({ sequence, campaigns, userId, onBack, onSave, onActiva
     }
   };
 
+  // Handle back button with unsaved changes check
+  const handleBack = () => {
+    if (hasChanges) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+        setHasChanges(false);
+        onBack();
+      }
+    } else {
+      onBack();
+    }
+  };
+
   // Calculate total duration
   const totalDays = steps.reduce((sum, s, i) => sum + (i === 0 ? 0 : s.delayDays), 0);
 
   return (
     <div className="space-y-6">
+      {/* Unsaved Changes Dialog */}
+      <UnsavedChangesDialog blocker={blocker} />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={onBack} className="gap-2">
+          <Button variant="ghost" onClick={handleBack} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back
+            {hasChanges && <span className="w-2 h-2 bg-yellow-500 rounded-full" />}
           </Button>
           <div>
             <h1 className="text-2xl font-bold">
