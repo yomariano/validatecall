@@ -31,14 +31,17 @@ function Inbox() {
     const [sending, setSending] = useState(false);
 
     useEffect(() => {
-        loadResponses();
-    }, [filter]);
+        if (user?.id) {
+            loadResponses();
+        }
+    }, [filter, user?.id]);
 
     const loadResponses = async () => {
+        if (!user?.id) return;
         try {
             setLoading(true);
             setError(null);
-            const data = await emailApi.getResponses(filter);
+            const data = await emailApi.getResponses(user.id, filter);
             setResponses(data.responses || []);
         } catch (err) {
             console.error('Failed to load email responses:', err);
@@ -54,9 +57,9 @@ function Inbox() {
         setReplyContent('');
 
         // Mark as read if unread
-        if (email.status === 'unread') {
+        if (email.status === 'unread' && user?.id) {
             try {
-                await emailApi.markAsRead(email.id);
+                await emailApi.markAsRead(user.id, email.id);
                 setResponses(prev =>
                     prev.map(e => e.id === email.id ? { ...e, status: 'read' } : e)
                 );
@@ -67,11 +70,11 @@ function Inbox() {
     };
 
     const handleSendReply = async () => {
-        if (!replyContent.trim() || !selectedEmail) return;
+        if (!replyContent.trim() || !selectedEmail || !user?.id) return;
 
         try {
             setSending(true);
-            await emailApi.replyToEmail({
+            await emailApi.replyToEmail(user.id, {
                 responseId: selectedEmail.id,
                 subject: `Re: ${selectedEmail.subject}`,
                 body: replyContent,

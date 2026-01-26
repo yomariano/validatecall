@@ -488,27 +488,35 @@ export const emailApi = {
     // =============================================
 
     // Get all email responses (inbox)
-    getResponses: (status = 'all') =>
-        apiRequest(`/api/email/responses?status=${status}`),
+    getResponses: (userId, status = 'all') =>
+        apiRequest(`/api/email/responses?status=${status}`, {
+            headers: { 'x-user-id': userId },
+        }),
 
     // Get unread email count
-    getUnreadCount: () =>
-        apiRequest('/api/email/responses/unread-count'),
+    getUnreadCount: (userId) =>
+        apiRequest('/api/email/responses/unread-count', {
+            headers: { 'x-user-id': userId },
+        }),
 
     // Get email thread for a specific lead
-    getThread: (leadId) =>
-        apiRequest(`/api/email/thread/${leadId}`),
+    getThread: (userId, leadId) =>
+        apiRequest(`/api/email/thread/${leadId}`, {
+            headers: { 'x-user-id': userId },
+        }),
 
     // Mark an email response as read
-    markAsRead: (responseId) =>
+    markAsRead: (userId, responseId) =>
         apiRequest(`/api/email/responses/${responseId}/read`, {
             method: 'PATCH',
+            headers: { 'x-user-id': userId },
         }),
 
     // Reply to an email response
-    replyToEmail: ({ responseId, subject, body, senderName, senderEmail, senderCompany }) =>
+    replyToEmail: (userId, { responseId, subject, body, senderName, senderEmail, senderCompany }) =>
         apiRequest(`/api/email/responses/${responseId}/reply`, {
             method: 'POST',
+            headers: { 'x-user-id': userId },
             body: JSON.stringify({ subject, body, senderName, senderEmail, senderCompany }),
         }),
 };
