@@ -1500,7 +1500,7 @@ OR JSON format:
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => openPanel('call', lead)}
+                              onClick={() => openPanel('test-call')}
                               className="h-8 w-8 p-0 text-primary hover:text-primary hover:bg-primary/10 rounded-lg transition-transform hover:scale-110"
                               title="Call lead"
                             >
