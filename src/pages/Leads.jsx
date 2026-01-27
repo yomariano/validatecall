@@ -190,6 +190,9 @@ function Leads() {
   // Test call state
   const [testCallMode, setTestCallMode] = useState(false);
   const [testPhoneNumber, setTestPhoneNumber] = useState('');
+  const [preTestPhoneNumber, setPreTestPhoneNumber] = useState('');
+  const [isTestCalling, setIsTestCalling] = useState(false);
+  const [testCallStatus, setTestCallStatus] = useState('');
 
   // Classification state
   const [isClassifying, setIsClassifying] = useState(false);
@@ -740,6 +743,8 @@ function Leads() {
   const openPanel = (type, lead = null) => {
     setTestCallMode(type === 'test-call');
     setTestPhoneNumber('');
+    setPreTestPhoneNumber('');
+    setTestCallStatus('');
     setIsScheduleMode(false);
     setScheduledDateTime('');
     setSelectedLead(lead || (type === 'test-call' ? { name: 'Test Call', phone: '' } : null));
@@ -889,6 +894,59 @@ function Leads() {
       ErrorEvents.callError(err.message);
     } finally {
       setIsCalling(false);
+    }
+  };
+
+  // Handle pre-test call before making the actual call
+  const handlePreTestCall = async () => {
+    const phoneNumber = preTestPhoneNumber.trim();
+
+    // Validate phone number
+    if (!phoneNumber) {
+      setTestCallStatus('Error: Please enter a phone number');
+      return;
+    }
+
+    // Validate product idea
+    if (!productIdea.trim()) {
+      setTestCallStatus('Error: Please enter your product/service description');
+      return;
+    }
+
+    setIsTestCalling(true);
+    setTestCallStatus('Initiating test call...');
+
+    LeadEvents.testCallInitiated();
+
+    try {
+      const callPayload = {
+        phoneNumber,
+        customerName: 'Test Call',
+        productIdea: productIdea.trim(),
+        companyContext: companyContext.trim() || undefined,
+      };
+
+      // Use assistant if selected
+      if (selectedAssistantId !== 'default') {
+        callPayload.assistantId = selectedAssistantId;
+      }
+
+      const result = user?.id
+        ? await vapiApi.initiateUserCall(user.id, callPayload)
+        : await vapiApi.initiateCall(callPayload);
+
+      setTestCallStatus(`✅ Test call initiated! Call ID: ${result.callId || result.id}`);
+
+      // Clear test phone number after successful call
+      setTimeout(() => {
+        setPreTestPhoneNumber('');
+        setTestCallStatus('');
+      }, 3000);
+    } catch (err) {
+      setTestCallStatus(`Error: ${err.message}`);
+      ErrorEvents.callError(err.message);
+    } finally {
+      setIsTestCalling(false);
     }
   };
 
@@ -1773,6 +1831,59 @@ OR JSON format:
                       />
                     </div>
                   </FormGroup>
+
+                  {/* Test Call First Section - only show when NOT in test mode */}
+                  {!testCallMode && (
+                    <div className="border border-primary/20 bg-primary/5 rounded-lg p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <PhoneCall className="h-4 w-4 text-primary" />
+                        <h3 className="font-medium text-sm">Test Call First (Optional)</h3>
+                      </div>
+
+                      {testCallStatus && (
+                        <Alert variant={testCallStatus.includes('Error') ? 'destructive' : 'info'}>
+                          <AlertDescription className="text-xs">{testCallStatus}</AlertDescription>
+                        </Alert>
+                      )}
+
+                      <div className="space-y-2">
+                        <Label className="text-xs">Test Phone Number</Label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            value={preTestPhoneNumber}
+                            onChange={(e) => setPreTestPhoneNumber(e.target.value)}
+                            placeholder="+1234567890"
+                            className="pl-10 font-mono text-sm"
+                            disabled={isTestCalling || isCalling}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Make a test call to verify your setup before calling the lead
+                        </p>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handlePreTestCall}
+                        disabled={isTestCalling || isCalling || !preTestPhoneNumber.trim() || !productIdea.trim()}
+                        className="w-full"
+                      >
+                        {isTestCalling ? (
+                          <>
+                            <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                            Calling...
+                          </>
+                        ) : (
+                          <>
+                            <PhoneCall className="h-3 w-3 mr-2" />
+                            Make Test Call
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
 
                   <div className="bg-secondary/50 rounded-lg p-4 text-sm">
                     <p className="font-medium mb-2">The AI will:</p>
