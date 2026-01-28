@@ -296,6 +296,13 @@ Generate only the closing text, nothing else:`;
     // Check if this voice ID is in our known list (excluding 'custom')
     const isKnownVoice = providerVoices.some(v => v.id === existingVoiceId && v.id !== 'custom');
 
+    console.log('📝 Loading agent for edit:', {
+      existingVoiceId,
+      isKnownVoice,
+      providerVoicesCount: providerVoices.length,
+      willSetCustom: !isKnownVoice
+    });
+
     setFormData({
       name: agent.name || '',
       voiceProvider: provider,
@@ -352,6 +359,12 @@ Generate only the closing text, nothing else:`;
       const actualVoiceId = formData.voiceId === 'custom'
         ? formData.customVoiceId.trim()
         : formData.voiceId;
+
+      console.log('💾 Saving agent with voice:', {
+        selected: formData.voiceId,
+        customVoiceId: formData.customVoiceId,
+        actualVoiceId: actualVoiceId
+      });
 
       const voiceConfig = {
         provider: formData.voiceProvider,
