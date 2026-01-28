@@ -190,6 +190,9 @@ function Leads() {
   // Test call state
   const [testCallMode, setTestCallMode] = useState(false);
   const [testPhoneNumber, setTestPhoneNumber] = useState('');
+  const [preTestPhoneNumber, setPreTestPhoneNumber] = useState('');
+  const [isTestCalling, setIsTestCalling] = useState(false);
+  const [testCallStatus, setTestCallStatus] = useState('');
 
   // Classification state
   const [isClassifying, setIsClassifying] = useState(false);
@@ -740,6 +743,8 @@ function Leads() {
   const openPanel = (type, lead = null) => {
     setTestCallMode(type === 'test-call');
     setTestPhoneNumber('');
+    setPreTestPhoneNumber('');
+    setTestCallStatus('');
     setIsScheduleMode(false);
     setScheduledDateTime('');
     setSelectedLead(lead || (type === 'test-call' ? { name: 'Test Call', phone: '' } : null));
@@ -792,12 +797,6 @@ function Leads() {
       return;
     }
 
-    // Always require product idea
-    if (!productIdea.trim()) {
-      setCallStatus('Error: Please enter your product/service description');
-      return;
-    }
-
     // Validate scheduled time if in schedule mode
     if (isScheduleMode) {
       if (!scheduledDateTime) {
@@ -830,8 +829,6 @@ function Leads() {
           phoneNumber,
           customerName: testCallMode ? 'Test Call' : (selectedLead?.name || 'Prospect'),
           scheduledAt: new Date(scheduledDateTime).toISOString(),
-          productIdea: productIdea.trim(),
-          companyContext: companyContext.trim() || undefined,
           assistantId: selectedAssistantId !== 'default' ? selectedAssistantId : undefined,
         };
 
@@ -857,12 +854,9 @@ function Leads() {
       const callPayload = {
         phoneNumber,
         customerName: testCallMode ? 'Test Call' : (selectedLead?.name || 'Prospect'),
-        productIdea: productIdea.trim(),
-        companyContext: companyContext.trim() || undefined,
       };
 
       // If using a pre-configured assistant, pass its ID
-      // The backend will use assistantOverrides to apply custom pitch
       if (selectedAssistantId !== 'default' && selectedAssistant) {
         callPayload.assistantId = selectedAssistantId;
       }
@@ -889,6 +883,51 @@ function Leads() {
       ErrorEvents.callError(err.message);
     } finally {
       setIsCalling(false);
+    }
+  };
+
+  // Handle pre-test call before making the actual call
+  const handlePreTestCall = async () => {
+    const phoneNumber = preTestPhoneNumber.trim();
+
+    // Validate phone number
+    if (!phoneNumber) {
+      setTestCallStatus('Error: Please enter a phone number');
+      return;
+    }
+
+    setIsTestCalling(true);
+    setTestCallStatus('Initiating test call...');
+
+    LeadEvents.testCallInitiated();
+
+    try {
+      const callPayload = {
+        phoneNumber,
+        customerName: 'Test Call',
+      };
+
+      // Use assistant if selected
+      if (selectedAssistantId !== 'default') {
+        callPayload.assistantId = selectedAssistantId;
+      }
+
+      const result = user?.id
+        ? await vapiApi.initiateUserCall(user.id, callPayload)
+        : await vapiApi.initiateCall(callPayload);
+
+      setTestCallStatus(`✅ Test call initiated! Call ID: ${result.callId || result.id}`);
+
+      // Clear test phone number after successful call
+      setTimeout(() => {
+        setPreTestPhoneNumber('');
+        setTestCallStatus('');
+      }, 3000);
+    } catch (err) {
+      setTestCallStatus(`Error: ${err.message}`);
+      ErrorEvents.callError(err.message);
+    } finally {
+      setIsTestCalling(false);
     }
   };
 
@@ -1733,54 +1772,66 @@ OR JSON format:
                     </div>
                   )}
 
-                  {/* Product/Context fields */}
-                  <FormGroup label="Your Product / Service">
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Textarea
-                          value={productIdea}
-                          onChange={(e) => setProductIdea(e.target.value)}
-                          placeholder="e.g., We're building an AI assistant that helps real estate agents..."
-                          rows={3}
-                          className="pl-10"
-                        />
+                  {/* Test Call First Section - only show when NOT in test mode */}
+                  {!testCallMode && (
+                    <div className="border border-primary/20 bg-primary/5 rounded-lg p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <PhoneCall className="h-4 w-4 text-primary" />
+                        <h3 className="font-medium text-sm">Test Call First (Optional)</h3>
                       </div>
-                      <AIGenerator
-                        type="product"
-                        placeholder="Describe your product in simple words..."
-                        onGenerate={setProductIdea}
-                      />
-                    </div>
-                  </FormGroup>
 
-                  <FormGroup label="Company Context (optional)">
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Textarea
-                          value={companyContext}
-                          onChange={(e) => setCompanyContext(e.target.value)}
-                          placeholder="e.g., ValidateCall is an AI-powered market research platform..."
-                          rows={3}
-                          className="pl-10"
-                        />
+                      {testCallStatus && (
+                        <Alert variant={testCallStatus.includes('Error') ? 'destructive' : 'info'}>
+                          <AlertDescription className="text-xs">{testCallStatus}</AlertDescription>
+                        </Alert>
+                      )}
+
+                      <div className="space-y-2">
+                        <Label className="text-xs">Test Phone Number</Label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            value={preTestPhoneNumber}
+                            onChange={(e) => setPreTestPhoneNumber(e.target.value)}
+                            placeholder="+1234567890"
+                            className="pl-10 font-mono text-sm"
+                            disabled={isTestCalling || isCalling}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Make a test call to verify your setup before calling the lead
+                        </p>
                       </div>
-                      <AIGenerator
-                        type="context"
-                        placeholder="Describe your company in simple words..."
-                        onGenerate={setCompanyContext}
-                      />
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handlePreTestCall}
+                        disabled={isTestCalling || isCalling || !preTestPhoneNumber.trim()}
+                        className="w-full"
+                      >
+                        {isTestCalling ? (
+                          <>
+                            <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                            Calling...
+                          </>
+                        ) : (
+                          <>
+                            <PhoneCall className="h-3 w-3 mr-2" />
+                            Make Test Call
+                          </>
+                        )}
+                      </Button>
                     </div>
-                  </FormGroup>
+                  )}
 
                   <div className="bg-secondary/50 rounded-lg p-4 text-sm">
-                    <p className="font-medium mb-2">The AI will:</p>
+                    <p className="font-medium mb-2">The selected AI assistant will:</p>
                     <ul className="space-y-1 text-muted-foreground">
-                      <li>• Introduce itself and explain your product/service</li>
-                      <li>• Ask if they would be interested</li>
-                      <li>• Gather feedback on pricing and features</li>
-                      <li>• Keep the call under 2 minutes</li>
+                      <li>• Introduce itself with its configured greeting</li>
+                      <li>• Conduct the call based on its training</li>
+                      <li>• Ask relevant questions and gather feedback</li>
+                      <li>• Keep the conversation professional and concise</li>
                     </ul>
                   </div>
                 </>
@@ -2151,7 +2202,6 @@ OR JSON format:
                   disabled={
                     isCalling ||
                     (testCallMode && !testPhoneNumber.trim()) ||
-                    !productIdea.trim() ||
                     (isScheduleMode && !scheduledDateTime)
                   }
                   className="flex-1"
