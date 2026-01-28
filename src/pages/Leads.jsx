@@ -797,12 +797,6 @@ function Leads() {
       return;
     }
 
-    // Always require product idea
-    if (!productIdea.trim()) {
-      setCallStatus('Error: Please enter your product/service description');
-      return;
-    }
-
     // Validate scheduled time if in schedule mode
     if (isScheduleMode) {
       if (!scheduledDateTime) {
@@ -835,8 +829,6 @@ function Leads() {
           phoneNumber,
           customerName: testCallMode ? 'Test Call' : (selectedLead?.name || 'Prospect'),
           scheduledAt: new Date(scheduledDateTime).toISOString(),
-          productIdea: productIdea.trim(),
-          companyContext: companyContext.trim() || undefined,
           assistantId: selectedAssistantId !== 'default' ? selectedAssistantId : undefined,
         };
 
@@ -862,12 +854,9 @@ function Leads() {
       const callPayload = {
         phoneNumber,
         customerName: testCallMode ? 'Test Call' : (selectedLead?.name || 'Prospect'),
-        productIdea: productIdea.trim(),
-        companyContext: companyContext.trim() || undefined,
       };
 
       // If using a pre-configured assistant, pass its ID
-      // The backend will use assistantOverrides to apply custom pitch
       if (selectedAssistantId !== 'default' && selectedAssistant) {
         callPayload.assistantId = selectedAssistantId;
       }
@@ -907,12 +896,6 @@ function Leads() {
       return;
     }
 
-    // Validate product idea
-    if (!productIdea.trim()) {
-      setTestCallStatus('Error: Please enter your product/service description');
-      return;
-    }
-
     setIsTestCalling(true);
     setTestCallStatus('Initiating test call...');
 
@@ -922,8 +905,6 @@ function Leads() {
       const callPayload = {
         phoneNumber,
         customerName: 'Test Call',
-        productIdea: productIdea.trim(),
-        companyContext: companyContext.trim() || undefined,
       };
 
       // Use assistant if selected
@@ -1791,47 +1772,6 @@ OR JSON format:
                     </div>
                   )}
 
-                  {/* Product/Context fields */}
-                  <FormGroup label="Your Product / Service">
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Textarea
-                          value={productIdea}
-                          onChange={(e) => setProductIdea(e.target.value)}
-                          placeholder="e.g., We're building an AI assistant that helps real estate agents..."
-                          rows={3}
-                          className="pl-10"
-                        />
-                      </div>
-                      <AIGenerator
-                        type="product"
-                        placeholder="Describe your product in simple words..."
-                        onGenerate={setProductIdea}
-                      />
-                    </div>
-                  </FormGroup>
-
-                  <FormGroup label="Company Context (optional)">
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Textarea
-                          value={companyContext}
-                          onChange={(e) => setCompanyContext(e.target.value)}
-                          placeholder="e.g., ValidateCall is an AI-powered market research platform..."
-                          rows={3}
-                          className="pl-10"
-                        />
-                      </div>
-                      <AIGenerator
-                        type="context"
-                        placeholder="Describe your company in simple words..."
-                        onGenerate={setCompanyContext}
-                      />
-                    </div>
-                  </FormGroup>
-
                   {/* Test Call First Section - only show when NOT in test mode */}
                   {!testCallMode && (
                     <div className="border border-primary/20 bg-primary/5 rounded-lg p-4 space-y-3">
@@ -1867,7 +1807,7 @@ OR JSON format:
                         variant="outline"
                         size="sm"
                         onClick={handlePreTestCall}
-                        disabled={isTestCalling || isCalling || !preTestPhoneNumber.trim() || !productIdea.trim()}
+                        disabled={isTestCalling || isCalling || !preTestPhoneNumber.trim()}
                         className="w-full"
                       >
                         {isTestCalling ? (
@@ -1886,12 +1826,12 @@ OR JSON format:
                   )}
 
                   <div className="bg-secondary/50 rounded-lg p-4 text-sm">
-                    <p className="font-medium mb-2">The AI will:</p>
+                    <p className="font-medium mb-2">The selected AI assistant will:</p>
                     <ul className="space-y-1 text-muted-foreground">
-                      <li>• Introduce itself and explain your product/service</li>
-                      <li>• Ask if they would be interested</li>
-                      <li>• Gather feedback on pricing and features</li>
-                      <li>• Keep the call under 2 minutes</li>
+                      <li>• Introduce itself with its configured greeting</li>
+                      <li>• Conduct the call based on its training</li>
+                      <li>• Ask relevant questions and gather feedback</li>
+                      <li>• Keep the conversation professional and concise</li>
                     </ul>
                   </div>
                 </>
