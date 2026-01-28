@@ -2202,7 +2202,6 @@ OR JSON format:
                   disabled={
                     isCalling ||
                     (testCallMode && !testPhoneNumber.trim()) ||
-                    !productIdea.trim() ||
                     (isScheduleMode && !scheduledDateTime)
                   }
                   className="flex-1"
