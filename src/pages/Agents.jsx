@@ -157,6 +157,7 @@ function Agents() {
     // Call settings
     silenceTimeoutSeconds: 30,
     maxDurationSeconds: 600,
+    firstMessageMode: 'assistant-waits-for-user', // Wait for user to answer before speaking
   });
 
   useEffect(() => {
@@ -200,6 +201,7 @@ function Agents() {
       useSpeakerBoost: true,
       silenceTimeoutSeconds: 30,
       maxDurationSeconds: 600,
+      firstMessageMode: 'assistant-waits-for-user',
     });
   };
 
@@ -333,6 +335,7 @@ Generate only the closing text, nothing else:`;
       // Call settings
       silenceTimeoutSeconds: agent.silenceTimeoutSeconds ?? 30,
       maxDurationSeconds: agent.maxDurationSeconds ?? 600,
+      firstMessageMode: agent.firstMessageMode || 'assistant-waits-for-user',
     });
     setEditingAgent(agent);
     setIsCreating(true);
@@ -420,6 +423,7 @@ Generate only the closing text, nothing else:`;
           language: formData.language === 'en' ? 'en' : formData.language,
         },
         firstMessage: formData.firstMessage,
+        firstMessageMode: formData.firstMessageMode, // Wait for user to answer before speaking
         endCallMessage: formData.endCallMessage,
         silenceTimeoutSeconds: parseInt(formData.silenceTimeoutSeconds),
         maxDurationSeconds: parseInt(formData.maxDurationSeconds),
@@ -777,6 +781,22 @@ Generate only the closing text, nothing else:`;
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Maximum call length
+                  </p>
+                </FormGroup>
+              </div>
+
+              {/* First Message Mode */}
+              <div className="pt-4 border-t border-border/50">
+                <FormGroup label="When to Start Speaking">
+                  <Select
+                    value={formData.firstMessageMode}
+                    onChange={(e) => setFormData({ ...formData, firstMessageMode: e.target.value })}
+                  >
+                    <option value="assistant-waits-for-user">Wait for user to say hello first (Recommended)</option>
+                    <option value="assistant-speaks-first">Speak immediately when call connects</option>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    &quot;Wait for user&quot; prevents talking before they answer
                   </p>
                 </FormGroup>
               </div>
