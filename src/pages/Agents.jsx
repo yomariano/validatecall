@@ -166,9 +166,11 @@ function Agents() {
     speed: 0.9,               // Speech speed (0.9 preserves natural accent rhythm)
     useSpeakerBoost: true,    // Enhance voice clarity
     // Call settings
-    silenceTimeoutSeconds: 30,
+    silenceTimeoutSeconds: 60, // Increased for IVR wait time
     maxDurationSeconds: 600,
     firstMessageMode: 'assistant-waits-for-user', // Wait for user to answer before speaking
+    // IVR/Automated system handling
+    waitSecondsBeforeSpeaking: 1.5, // Wait longer before responding (helps with IVR)
     // Voicemail & IVR detection
     voicemailDetectionEnabled: true,
     enableDtmf: true, // Allow sending key presses for IVR navigation
@@ -213,9 +215,10 @@ function Agents() {
       style: 0.38,
       speed: 0.9,
       useSpeakerBoost: true,
-      silenceTimeoutSeconds: 30,
+      silenceTimeoutSeconds: 60,
       maxDurationSeconds: 600,
       firstMessageMode: 'assistant-waits-for-user',
+      waitSecondsBeforeSpeaking: 1.5,
       voicemailDetectionEnabled: true,
       enableDtmf: true,
     });
@@ -349,9 +352,10 @@ Generate only the closing text, nothing else:`;
       speed: agent.voice?.speed ?? 0.9,
       useSpeakerBoost: agent.voice?.useSpeakerBoost ?? true,
       // Call settings
-      silenceTimeoutSeconds: agent.silenceTimeoutSeconds ?? 30,
+      silenceTimeoutSeconds: agent.silenceTimeoutSeconds ?? 60,
       maxDurationSeconds: agent.maxDurationSeconds ?? 600,
       firstMessageMode: agent.firstMessageMode || 'assistant-waits-for-user',
+      waitSecondsBeforeSpeaking: agent.startSpeakingPlan?.waitSeconds ?? 1.5,
       voicemailDetectionEnabled: agent.voicemailDetection !== 'off',
       enableDtmf: agent.tools?.some(t => t.type === 'dtmf') ?? true,
     });
@@ -445,6 +449,11 @@ Generate only the closing text, nothing else:`;
         endCallMessage: formData.endCallMessage,
         silenceTimeoutSeconds: parseInt(formData.silenceTimeoutSeconds),
         maxDurationSeconds: parseInt(formData.maxDurationSeconds),
+        // Start speaking plan - helps with IVR by delaying responses
+        startSpeakingPlan: {
+          waitSeconds: parseFloat(formData.waitSecondsBeforeSpeaking),
+          smartEndpointingEnabled: true,
+        },
         // Voicemail detection - only include if enabled
         ...(formData.voicemailDetectionEnabled && {
           voicemailDetection: {
@@ -777,7 +786,7 @@ Generate only the closing text, nothing else:`;
                     <input
                       type="range"
                       min="10"
-                      max="60"
+                      max="120"
                       step="5"
                       value={formData.silenceTimeoutSeconds}
                       onChange={(e) => setFormData({ ...formData, silenceTimeoutSeconds: parseInt(e.target.value) })}
@@ -786,7 +795,7 @@ Generate only the closing text, nothing else:`;
                     <span className="text-sm font-mono w-10">{formData.silenceTimeoutSeconds}s</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    How long to wait on silence before ending
+                    Wait on silence before ending (60s+ for IVR)
                   </p>
                 </FormGroup>
 
@@ -809,20 +818,40 @@ Generate only the closing text, nothing else:`;
                 </FormGroup>
               </div>
 
-              {/* First Message Mode */}
+              {/* First Message Mode & IVR Handling */}
               <div className="pt-4 border-t border-border/50">
-                <FormGroup label="When to Start Speaking">
-                  <Select
-                    value={formData.firstMessageMode}
-                    onChange={(e) => setFormData({ ...formData, firstMessageMode: e.target.value })}
-                  >
-                    <option value="assistant-waits-for-user">Wait for user to say hello first (Recommended)</option>
-                    <option value="assistant-speaks-first">Speak immediately when call connects</option>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    &quot;Wait for user&quot; prevents talking before they answer
-                  </p>
-                </FormGroup>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormGroup label="When to Start Speaking">
+                    <Select
+                      value={formData.firstMessageMode}
+                      onChange={(e) => setFormData({ ...formData, firstMessageMode: e.target.value })}
+                    >
+                      <option value="assistant-waits-for-user">Wait for user to say hello first (Recommended)</option>
+                      <option value="assistant-speaks-first">Speak immediately when call connects</option>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      &quot;Wait for user&quot; prevents talking before they answer
+                    </p>
+                  </FormGroup>
+
+                  <FormGroup label="Response Delay (IVR Handling)">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="3"
+                        step="0.25"
+                        value={formData.waitSecondsBeforeSpeaking}
+                        onChange={(e) => setFormData({ ...formData, waitSecondsBeforeSpeaking: parseFloat(e.target.value) })}
+                        className="flex-1"
+                      />
+                      <span className="text-sm font-mono w-12">{formData.waitSecondsBeforeSpeaking}s</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Wait time before responding (1.5s+ helps with IVR menus)
+                    </p>
+                  </FormGroup>
+                </div>
 
                 {/* Voicemail & IVR Detection */}
                 <div className="grid md:grid-cols-2 gap-4 mt-4">
