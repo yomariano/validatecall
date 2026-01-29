@@ -453,16 +453,11 @@ Generate only the closing text, nothing else:`;
         endCallMessage: formData.endCallMessage,
         silenceTimeoutSeconds: parseInt(formData.silenceTimeoutSeconds),
         maxDurationSeconds: parseInt(formData.maxDurationSeconds),
-        // Voicemail detection
+        // Voicemail detection - simplified config
         voicemailDetection: formData.voicemailDetectionEnabled ? {
           provider: 'vapi',
-          voicemailDetectionTypes: ['machine_end_beep', 'machine_end_silence', 'machine_end_other'],
           enabled: true,
-          machineDetectionTimeout: 30,
-          machineDetectionSpeechThreshold: 3000,
-          machineDetectionSpeechEndThreshold: 1200,
-          machineDetectionSilenceTimeout: 3000,
-        } : 'off',
+        } : undefined,
       };
 
       if (editingAgent) {
