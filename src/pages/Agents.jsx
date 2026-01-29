@@ -149,9 +149,10 @@ function Agents() {
     firstMessage: DEFAULT_FIRST_MESSAGE,
     endCallMessage: 'Thank you so much for your time today! Your feedback is incredibly valuable. Have a great day!',
     // Voice naturalness settings (ElevenLabs)
-    stability: 0.4,           // Lower = more expressive/natural (0.3-0.5 recommended)
+    stability: 0.36,          // Lower = more expressive/natural (0.3-0.5 recommended)
     similarityBoost: 0.75,    // Voice clarity
-    style: 0.5,               // Expressiveness (ElevenLabs v2 voices)
+    style: 0.38,              // Expressiveness (ElevenLabs v2 voices)
+    speed: 0.9,               // Speech speed (0.9 preserves natural accent rhythm)
     useSpeakerBoost: true,    // Enhance voice clarity
     // Call settings
     silenceTimeoutSeconds: 30,
@@ -192,9 +193,10 @@ function Agents() {
       systemPrompt: DEFAULT_SYSTEM_PROMPT,
       firstMessage: DEFAULT_FIRST_MESSAGE,
       endCallMessage: 'Thank you so much for your time today! Your feedback is incredibly valuable. Have a great day!',
-      stability: 0.4,
+      stability: 0.36,
       similarityBoost: 0.75,
-      style: 0.5,
+      style: 0.38,
+      speed: 0.9,
       useSpeakerBoost: true,
       silenceTimeoutSeconds: 30,
       maxDurationSeconds: 600,
@@ -305,6 +307,7 @@ Generate only the closing text, nothing else:`;
         stability: agent.voice?.stability,
         similarityBoost: agent.voice?.similarityBoost,
         style: agent.voice?.style,
+        speed: agent.voice?.speed,
         model: agent.voice?.model
       }
     });
@@ -322,9 +325,10 @@ Generate only the closing text, nothing else:`;
       firstMessage: agent.firstMessage || DEFAULT_FIRST_MESSAGE,
       endCallMessage: agent.endCallMessage || '',
       // Voice naturalness settings
-      stability: agent.voice?.stability ?? 0.4,
+      stability: agent.voice?.stability ?? 0.36,
       similarityBoost: agent.voice?.similarityBoost ?? 0.75,
-      style: agent.voice?.style ?? 0.5,
+      style: agent.voice?.style ?? 0.38,
+      speed: agent.voice?.speed ?? 0.9,
       useSpeakerBoost: agent.voice?.useSpeakerBoost ?? true,
       // Call settings
       silenceTimeoutSeconds: agent.silenceTimeoutSeconds ?? 30,
@@ -382,6 +386,7 @@ Generate only the closing text, nothing else:`;
         voiceConfig.stability = parseFloat(formData.stability);
         voiceConfig.similarityBoost = parseFloat(formData.similarityBoost);
         voiceConfig.style = parseFloat(formData.style);
+        voiceConfig.speed = parseFloat(formData.speed); // Important for accent rhythm
         voiceConfig.useSpeakerBoost = formData.useSpeakerBoost;
         // CRITICAL: Set model for native non-English pronunciation
         voiceConfig.model = formData.elevenLabsModel;
@@ -654,7 +659,7 @@ Generate only the closing text, nothing else:`;
               {formData.voiceProvider === '11labs' && (
                 <div className="pt-4 border-t border-border/50">
                   <p className="text-xs text-muted-foreground mb-3">Voice Naturalness (ElevenLabs)</p>
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid md:grid-cols-4 gap-4">
                     <FormGroup label="Stability">
                       <div className="flex items-center gap-3">
                         <input
@@ -706,6 +711,24 @@ Generate only the closing text, nothing else:`;
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         Higher = more expressive
+                      </p>
+                    </FormGroup>
+
+                    <FormGroup label="Speed">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="range"
+                          min="0.5"
+                          max="1.5"
+                          step="0.05"
+                          value={formData.speed}
+                          onChange={(e) => setFormData({ ...formData, speed: parseFloat(e.target.value) })}
+                          className="flex-1"
+                        />
+                        <span className="text-sm font-mono w-10">{formData.speed}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        0.9 = natural accent rhythm
                       </p>
                     </FormGroup>
                   </div>
