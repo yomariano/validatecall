@@ -158,6 +158,9 @@ function Agents() {
     silenceTimeoutSeconds: 30,
     maxDurationSeconds: 600,
     firstMessageMode: 'assistant-waits-for-user', // Wait for user to answer before speaking
+    // Voicemail & IVR detection
+    voicemailDetectionEnabled: true,
+    enableDtmf: true, // Allow sending key presses for IVR navigation
   });
 
   useEffect(() => {
@@ -202,6 +205,8 @@ function Agents() {
       silenceTimeoutSeconds: 30,
       maxDurationSeconds: 600,
       firstMessageMode: 'assistant-waits-for-user',
+      voicemailDetectionEnabled: true,
+      enableDtmf: true,
     });
   };
 
@@ -336,6 +341,8 @@ Generate only the closing text, nothing else:`;
       silenceTimeoutSeconds: agent.silenceTimeoutSeconds ?? 30,
       maxDurationSeconds: agent.maxDurationSeconds ?? 600,
       firstMessageMode: agent.firstMessageMode || 'assistant-waits-for-user',
+      voicemailDetectionEnabled: agent.voicemailDetection !== 'off',
+      enableDtmf: agent.tools?.some(t => t.type === 'dtmf') ?? true,
     });
     setEditingAgent(agent);
     setIsCreating(true);
@@ -401,6 +408,12 @@ Generate only the closing text, nothing else:`;
 
       console.log('🎤 Full voice config being sent to Vapi:', voiceConfig);
 
+      // Build tools array
+      const tools = [];
+      if (formData.enableDtmf) {
+        tools.push({ type: 'dtmf' }); // Allow sending key presses for IVR navigation
+      }
+
       const assistantConfig = {
         name: formData.name,
         model: {
@@ -413,6 +426,7 @@ Generate only the closing text, nothing else:`;
               content: formData.systemPrompt,
             },
           ],
+          tools: tools.length > 0 ? tools : undefined,
         },
         voice: voiceConfig,
         // Configure transcriber for the correct language (speech-to-text)
@@ -427,6 +441,16 @@ Generate only the closing text, nothing else:`;
         endCallMessage: formData.endCallMessage,
         silenceTimeoutSeconds: parseInt(formData.silenceTimeoutSeconds),
         maxDurationSeconds: parseInt(formData.maxDurationSeconds),
+        // Voicemail detection
+        voicemailDetection: formData.voicemailDetectionEnabled ? {
+          provider: 'vapi',
+          voicemailDetectionTypes: ['machine_end_beep', 'machine_end_silence', 'machine_end_other'],
+          enabled: true,
+          machineDetectionTimeout: 30,
+          machineDetectionSpeechThreshold: 3000,
+          machineDetectionSpeechEndThreshold: 1200,
+          machineDetectionSilenceTimeout: 3000,
+        } : 'off',
       };
 
       if (editingAgent) {
@@ -799,6 +823,39 @@ Generate only the closing text, nothing else:`;
                     &quot;Wait for user&quot; prevents talking before they answer
                   </p>
                 </FormGroup>
+
+                {/* Voicemail & IVR Detection */}
+                <div className="grid md:grid-cols-2 gap-4 mt-4">
+                  <FormGroup label="Voicemail Detection">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.voicemailDetectionEnabled}
+                        onChange={(e) => setFormData({ ...formData, voicemailDetectionEnabled: e.target.checked })}
+                        className="rounded border-border"
+                      />
+                      <span className="text-sm">Detect answering machines & voicemail</span>
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Hangs up or leaves message when voicemail detected
+                    </p>
+                  </FormGroup>
+
+                  <FormGroup label="IVR Navigation (DTMF)">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.enableDtmf}
+                        onChange={(e) => setFormData({ ...formData, enableDtmf: e.target.checked })}
+                        className="rounded border-border"
+                      />
+                      <span className="text-sm">Enable key press navigation</span>
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Handles &quot;Press 1 for...&quot; automated menus
+                    </p>
+                  </FormGroup>
+                </div>
               </div>
             </div>
 
