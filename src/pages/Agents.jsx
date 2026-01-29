@@ -300,7 +300,13 @@ Generate only the closing text, nothing else:`;
       existingVoiceId,
       isKnownVoice,
       providerVoicesCount: providerVoices.length,
-      willSetCustom: !isKnownVoice
+      willSetCustom: !isKnownVoice,
+      voiceSettings: {
+        stability: agent.voice?.stability,
+        similarityBoost: agent.voice?.similarityBoost,
+        style: agent.voice?.style,
+        model: agent.voice?.model
+      }
     });
 
     setFormData({
@@ -384,6 +390,8 @@ Generate only the closing text, nothing else:`;
           voiceConfig.language = formData.language;
         }
       }
+
+      console.log('🎤 Full voice config being sent to Vapi:', voiceConfig);
 
       const assistantConfig = {
         name: formData.name,
