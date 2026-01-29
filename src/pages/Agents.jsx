@@ -453,11 +453,12 @@ Generate only the closing text, nothing else:`;
         endCallMessage: formData.endCallMessage,
         silenceTimeoutSeconds: parseInt(formData.silenceTimeoutSeconds),
         maxDurationSeconds: parseInt(formData.maxDurationSeconds),
-        // Voicemail detection - simplified config
-        voicemailDetection: formData.voicemailDetectionEnabled ? {
-          provider: 'vapi',
-          enabled: true,
-        } : undefined,
+        // Voicemail detection - only include if enabled
+        ...(formData.voicemailDetectionEnabled && {
+          voicemailDetection: {
+            provider: 'twilio',
+          }
+        }),
       };
 
       if (editingAgent) {
