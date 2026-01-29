@@ -419,7 +419,7 @@ Generate only the closing text, nothing else:`;
 
       console.log('🎤 Full voice config being sent to Vapi:', voiceConfig);
 
-      // Build tools array
+      // Build tools array for IVR navigation
       const tools = [];
       if (formData.enableDtmf) {
         tools.push({ type: 'dtmf' }); // Allow sending key presses for IVR navigation
@@ -437,8 +437,9 @@ Generate only the closing text, nothing else:`;
               content: formData.systemPrompt,
             },
           ],
-          tools: tools.length > 0 ? tools : undefined,
         },
+        // DTMF tool must be at root level for Vapi
+        ...(tools.length > 0 && { tools }),
         voice: voiceConfig,
         // Configure transcriber for the correct language (speech-to-text)
         transcriber: {
