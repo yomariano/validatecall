@@ -33,8 +33,18 @@ import VoiceTestModal from '@/components/VoiceTestModal';
 // Voice provider options
 const VOICE_PROVIDERS = [
   { id: '11labs', name: 'ElevenLabs', description: 'High-quality, natural voices' },
+  { id: 'vapi', name: 'Vapi', description: 'Built-in voices with background sounds' },
   { id: 'openai', name: 'OpenAI', description: 'Fast, reliable TTS' },
   { id: 'deepgram', name: 'Deepgram', description: 'Low-latency voices' },
+];
+
+// Vapi background sound options
+const VAPI_BACKGROUND_SOUNDS = [
+  { id: 'off', name: 'None', description: 'No background sound' },
+  { id: 'office', name: 'Office', description: 'Typical office ambiance' },
+  { id: 'cafe', name: 'Café', description: 'Coffee shop atmosphere' },
+  { id: 'restaurant', name: 'Restaurant', description: 'Busy restaurant background' },
+  { id: 'call-center', name: 'Call Center', description: 'Professional call center' },
 ];
 
 // Language options for ElevenLabs (ISO 639-1 codes only - no regional variants)
@@ -165,6 +175,8 @@ function Agents() {
     style: 0.38,              // Expressiveness (ElevenLabs v2 voices)
     speed: 0.9,               // Speech speed (0.9 preserves natural accent rhythm)
     useSpeakerBoost: true,    // Enhance voice clarity
+    // Vapi background sound settings
+    backgroundSound: 'off',   // Vapi background noise (office, cafe, etc.)
     // Call settings
     silenceTimeoutSeconds: 60, // Increased for IVR wait time
     maxDurationSeconds: 600,
@@ -215,6 +227,7 @@ function Agents() {
       style: 0.38,
       speed: 0.9,
       useSpeakerBoost: true,
+      backgroundSound: 'off',
       silenceTimeoutSeconds: 60,
       maxDurationSeconds: 600,
       firstMessageMode: 'assistant-waits-for-user',
@@ -351,6 +364,8 @@ Generate only the closing text, nothing else:`;
       style: agent.voice?.style ?? 0.38,
       speed: agent.voice?.speed ?? 0.9,
       useSpeakerBoost: agent.voice?.useSpeakerBoost ?? true,
+      // Background sound setting
+      backgroundSound: agent.backgroundSound || 'off',
       // Call settings
       silenceTimeoutSeconds: agent.silenceTimeoutSeconds ?? 60,
       maxDurationSeconds: agent.maxDurationSeconds ?? 600,
@@ -421,7 +436,17 @@ Generate only the closing text, nothing else:`;
         }
       }
 
+      // Add Vapi-specific settings including background sound
+      if (formData.voiceProvider === 'vapi') {
+        // Vapi uses its own voice IDs, already set above
+      }
+
       console.log('🎤 Full voice config being sent to Vapi:', voiceConfig);
+
+      // Build background sound config (works with all providers via Vapi)
+      const backgroundSoundConfig = formData.backgroundSound !== 'off' ? {
+        backgroundSound: formData.backgroundSound,
+      } : {};
 
       const assistantConfig = {
         name: formData.name,
@@ -449,6 +474,8 @@ Generate only the closing text, nothing else:`;
         endCallMessage: formData.endCallMessage,
         silenceTimeoutSeconds: parseInt(formData.silenceTimeoutSeconds),
         maxDurationSeconds: parseInt(formData.maxDurationSeconds),
+        // Background sound (office, cafe, etc.) - Vapi feature
+        ...backgroundSoundConfig,
         // Start speaking plan - helps with IVR by delaying responses
         startSpeakingPlan: {
           waitSeconds: parseFloat(formData.waitSecondsBeforeSpeaking),
@@ -771,6 +798,28 @@ Generate only the closing text, nothing else:`;
                   </div>
                 </div>
               )}
+
+              {/* Background Sound Settings - works with all providers via Vapi */}
+              <div className="pt-4 border-t border-border/50">
+                <p className="text-xs text-muted-foreground mb-3">Background Sound (Vapi Feature)</p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormGroup label="Background Sound">
+                    <Select
+                      value={formData.backgroundSound}
+                      onChange={(e) => setFormData({ ...formData, backgroundSound: e.target.value })}
+                    >
+                      {VAPI_BACKGROUND_SOUNDS.map((sound) => (
+                        <option key={sound.id} value={sound.id}>
+                          {sound.name} - {sound.description}
+                        </option>
+                      ))}
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Add ambient background noise to make calls sound more natural
+                    </p>
+                  </FormGroup>
+                </div>
+              </div>
             </div>
 
             {/* Call Settings */}
