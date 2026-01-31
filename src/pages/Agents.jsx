@@ -42,9 +42,6 @@ const VOICE_PROVIDERS = [
 const VAPI_BACKGROUND_SOUNDS = [
   { id: 'off', name: 'None', description: 'No background sound' },
   { id: 'office', name: 'Office', description: 'Typical office ambiance' },
-  { id: 'cafe', name: 'Café', description: 'Coffee shop atmosphere' },
-  { id: 'restaurant', name: 'Restaurant', description: 'Busy restaurant background' },
-  { id: 'call-center', name: 'Call Center', description: 'Professional call center' },
 ];
 
 // Language options for ElevenLabs (ISO 639-1 codes only - no regional variants)
