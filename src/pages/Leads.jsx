@@ -427,19 +427,9 @@ function Leads() {
 
         loadLeads();
       } catch (saveErr) {
-        // Database not available, show results in UI
         console.error('Save leads error:', saveErr);
-        // Map camelCase to snake_case for consistency with DB format
-        setAllLeads(results.map((r, i) => ({
-          ...r,
-          id: i,
-          status: 'new',
-          review_count: r.reviewCount,
-          place_id: r.placeId,
-        })));
-        setSuccess(`Found ${results.length} leads (not saved to database).`);
-        LeadEvents.scrapeCompleted(results.length, 0, results.length);
-        completeStep(1); // Mark step complete even without DB
+        setSuccess('');
+        setError(saveErr.message || 'Could not save your leads. Please try again.');
       }
     } catch (err) {
       setError(err.message);
@@ -559,11 +549,9 @@ function Leads() {
           await classifyLeadsIndustry(leadsToClassify);
         }
         loadLeads();
-      } catch {
-        setAllLeads(parsedLeads.map((r, i) => ({ ...r, id: i, status: 'new' })));
-        setSuccess(`Imported ${parsedLeads.length} leads.`);
-        LeadEvents.fileImported(fileType, parsedLeads.length);
-        completeStep(1);
+      } catch (saveErr) {
+        setSuccess('');
+        setError(saveErr.message || 'Could not save your contacts. Please try the import again.');
       }
     } catch (err) {
       setError(err.message);
@@ -619,12 +607,9 @@ function Leads() {
         }
         loadLeads();
         setPasteData('');
-      } catch {
-        setAllLeads(parsedLeads.map((r, i) => ({ ...r, id: i, status: 'new' })));
-        setSuccess(`Imported ${parsedLeads.length} leads.`);
-        LeadEvents.pasteImported(parsedLeads.length);
-        completeStep(1);
-        setPasteData('');
+      } catch (saveErr) {
+        setSuccess('');
+        setError(saveErr.message || 'Could not save your contacts. Your pasted data is still available to retry.');
       }
     } catch (err) {
       setError(err.message);
