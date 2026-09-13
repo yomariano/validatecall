@@ -119,7 +119,7 @@ export default function LeadResultsTable({ leads, setFilter, filter, categoryFil
               <div className="p-8">
                 <EmptyState
                   title="No leads yet"
-                  description="Scrape Google Maps or import a file to get started"
+                  description="Import your contacts or search business sources to get started"
                   icon={Users}
                 />
               </div>

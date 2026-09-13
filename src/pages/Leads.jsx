@@ -927,7 +927,7 @@ function Leads() {
               Find Leads
             </h1>
             <p className="text-muted-foreground font-medium">
-              Scrape Google Maps or import your own leads to fuel your outreach
+              Research business sources or import your own contacts for outreach
             </p>
           </div>
           <div className="flex items-center gap-3">
