@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { domainsApi, settingsApi } from '../services/api';
 import {
   Settings as SettingsIcon,
@@ -68,7 +68,7 @@ function Settings() {
   // Resend API Key state
   const [resendApiKey, setResendApiKey] = useState('');
   const [resendKeyStatus, setResendKeyStatus] = useState(null);
-  const [isLoadingResendKey, setIsLoadingResendKey] = useState(false);
+
   const [isSavingResendKey, setIsSavingResendKey] = useState(false);
   const [showResendApiKey, setShowResendApiKey] = useState(false);
   const [resendDomains, setResendDomains] = useState([]);
@@ -76,7 +76,7 @@ function Settings() {
   // SendGrid API Key state
   const [sendgridApiKey, setSendgridApiKey] = useState('');
   const [sendgridKeyStatus, setSendgridKeyStatus] = useState(null);
-  const [isLoadingSendgridKey, setIsLoadingSendgridKey] = useState(false);
+
   const [isSavingSendgridKey, setIsSavingSendgridKey] = useState(false);
   const [showSendgridApiKey, setShowSendgridApiKey] = useState(false);
   const [sendgridSenders, setSendgridSenders] = useState([]);
@@ -91,15 +91,7 @@ function Settings() {
   const [isSavingBrand, setIsSavingBrand] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
-  useEffect(() => {
-    if (user?.id) {
-      loadDomains();
-      loadEmailProviderSettings();
-      loadBrandSettings();
-    }
-  }, [user?.id]);
-
-  const loadDomains = async () => {
+  const loadDomains = useCallback(async () => {
     setIsLoading(true);
     try {
       const result = await domainsApi.list(user.id);
@@ -113,9 +105,31 @@ function Settings() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  const loadEmailProviderSettings = async () => {
+  const loadResendDomains = useCallback(async () => {
+    try {
+      const result = await settingsApi.getResendDomains(user.id);
+      if (result.success) {
+        setResendDomains(result.domains || []);
+      }
+    } catch (err) {
+      console.error('Failed to load Resend domains:', err);
+    }
+  }, [user?.id]);
+
+  const loadSendgridSenders = useCallback(async () => {
+    try {
+      const result = await settingsApi.getSendGridSenders(user.id);
+      if (result.success) {
+        setSendgridSenders(result.senders || []);
+      }
+    } catch (err) {
+      console.error('Failed to load SendGrid senders:', err);
+    }
+  }, [user?.id]);
+
+  const loadEmailProviderSettings = useCallback(async () => {
     setIsLoadingProviders(true);
     try {
       const result = await settingsApi.getEmailProviderSettings(user.id);
@@ -138,31 +152,9 @@ function Settings() {
     } finally {
       setIsLoadingProviders(false);
     }
-  };
+  }, [loadResendDomains, loadSendgridSenders, user?.id]);
 
-  const loadResendDomains = async () => {
-    try {
-      const result = await settingsApi.getResendDomains(user.id);
-      if (result.success) {
-        setResendDomains(result.domains || []);
-      }
-    } catch (err) {
-      console.error('Failed to load Resend domains:', err);
-    }
-  };
-
-  const loadSendgridSenders = async () => {
-    try {
-      const result = await settingsApi.getSendGridSenders(user.id);
-      if (result.success) {
-        setSendgridSenders(result.senders || []);
-      }
-    } catch (err) {
-      console.error('Failed to load SendGrid senders:', err);
-    }
-  };
-
-  const loadBrandSettings = async () => {
+  const loadBrandSettings = useCallback(async () => {
     setIsLoadingBrand(true);
     try {
       const result = await settingsApi.getBrandSettings(user.id);
@@ -178,7 +170,25 @@ function Settings() {
     } finally {
       setIsLoadingBrand(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadDomains();
+      loadEmailProviderSettings();
+      loadBrandSettings();
+    }
+  }, [loadBrandSettings, loadDomains, loadEmailProviderSettings, user?.id]);
+
+
+
+
+
+
+
+
+
+
 
   const handleSaveBrandSettings = async (e) => {
     e.preventDefault();
@@ -1265,7 +1275,7 @@ function Settings() {
                         <label className="cursor-pointer">
                           <input
                             type="file"
-                            accept="image/*"
+                            accept="image/png,image/jpeg,image/gif,image/webp"
                             onChange={handleLogoUpload}
                             className="hidden"
                             disabled={isUploadingLogo}
@@ -1304,7 +1314,7 @@ function Settings() {
                   <label className="cursor-pointer">
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/png,image/jpeg,image/gif,image/webp"
                       onChange={handleLogoUpload}
                       className="hidden"
                       disabled={isUploadingLogo}
@@ -1320,7 +1330,7 @@ function Settings() {
                           <Upload className="h-8 w-8 text-muted-foreground" />
                           <p className="text-sm font-medium">Click to upload logo</p>
                           <p className="text-xs text-muted-foreground">
-                            PNG, JPG, SVG up to 2MB. Recommended: 200x50px with transparent background
+                            PNG, JPG, GIF or WebP up to 2MB. Recommended: 200x50px with transparent background
                           </p>
                         </div>
                       )}

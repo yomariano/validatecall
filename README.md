@@ -1,16 +1,35 @@
-# React + Vite
+# ValidateCall
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React/Vite frontend for lead import, sourced web research, voice campaigns, and outreach workflows.
+The API owns PostgreSQL access, Google sign-in, sessions, and all provider secrets.
 
-Currently, two official plugins are available:
+## Local setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Start the sibling `validatecall-api` project first; its README covers PostgreSQL and Google OAuth.
 
-## React Compiler
+```sh
+npm ci
+cp .env.example .env
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Set `VITE_API_URL` to the API URL. Google redirects back to the API's configured `FRONTEND_URL`.
+No Supabase configuration or browser-side private provider keys are needed.
 
-## Expanding the ESLint configuration
+```sh
+npm run lint
+npm run build
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Pages and the browser voice SDK load on demand. The production host must serve `index.html`
+for frontend routes such as `/dashboard`. Keep frontend and API on the same site with HTTPS
+for the HttpOnly session cookie (e.g. `app.validatecall.com` and `api.validatecall.com`).
+
+## Research
+
+Lead search and industry research use the API's Brave Search + DeepInfra integration. Results
+include source links; contact details without supporting search evidence are left empty.
+Search snippets can be incomplete or outdated, so review sources before using a contact.
+CSV and pasted-data imports work without research provider keys.
+
+Google sign-in uses only openid/email/profile. It does not read Gmail or request mailbox access.

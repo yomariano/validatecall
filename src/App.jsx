@@ -1,26 +1,26 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { UsageProvider } from '@/context/UsageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
-import Landing from './pages/Landing';
-import PricingPublic from './pages/PricingPublic';
-import Privacy from './pages/Privacy';
-import Terms from './pages/Terms';
-import Dashboard from './pages/Dashboard';
-import Leads from './pages/Leads';
-import Campaigns from './pages/Campaigns';
-import Agents from './pages/Agents';
-import History from './pages/History';
-import Pricing from './pages/Pricing';
-import Settings from './pages/Settings';
-import Admin from './pages/Admin';
-import Inbox from './pages/Inbox';
-import Sequences from './pages/Sequences';
-import Workflows from './pages/Workflows';
-import EmailAnalytics from './pages/EmailAnalytics';
+const Landing = lazy(() => import('./pages/Landing'));
+const PricingPublic = lazy(() => import('./pages/PricingPublic'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const Terms = lazy(() => import('./pages/Terms'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Leads = lazy(() => import('./pages/Leads'));
+const Campaigns = lazy(() => import('./pages/Campaigns'));
+const Agents = lazy(() => import('./pages/Agents'));
+const History = lazy(() => import('./pages/History'));
+const Pricing = lazy(() => import('./pages/Pricing'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Admin = lazy(() => import('./pages/Admin'));
+const Inbox = lazy(() => import('./pages/Inbox'));
+const Sequences = lazy(() => import('./pages/Sequences'));
+const Workflows = lazy(() => import('./pages/Workflows'));
+const EmailAnalytics = lazy(() => import('./pages/EmailAnalytics'));
 import { trackRouteChange } from '@/lib/analytics';
 import './App.css';
 
@@ -51,6 +51,7 @@ function App() {
         <UsageProvider>
           <BrowserRouter>
             <PageTracker />
+            <Suspense fallback={<div role="status" className="p-8 text-center">Loading…</div>}>
             <Routes>
             {/* Public routes */}
             <Route path="/" element={<Landing />} />
@@ -75,6 +76,7 @@ function App() {
             {/* Catch-all redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </Suspense>
           </BrowserRouter>
         </UsageProvider>
       </AuthProvider>

@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Zap } from 'lucide-react';
 
 function Login() {
-    const { user, loading, error, isLocalhost, signInWithGoogle } = useAuth();
+    const { user, loading, error, signInWithGoogle } = useAuth();
     const navigate = useNavigate();
 
     // Redirect to dashboard if already logged in
@@ -47,17 +47,6 @@ function Login() {
                         AI-Powered Market Research
                     </p>
                 </div>
-
-                {/* Localhost Notice */}
-                {isLocalhost && (
-                    <Alert variant="info" className="mb-6">
-                        <AlertDescription>
-                            🔓 <strong>Localhost Mode:</strong> Authentication is bypassed for development.
-                            Click below to continue.
-                        </AlertDescription>
-                    </Alert>
-                )}
-
                 {/* Login Card */}
                 <Card>
                     <CardHeader className="text-center pb-2">
@@ -97,7 +86,7 @@ function Login() {
                                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                                 />
                             </svg>
-                            {isLocalhost ? 'Continue to Dashboard' : 'Sign in with Google'}
+                            Sign in with Google
                         </Button>
 
                         <p className="text-xs text-center text-muted-foreground">

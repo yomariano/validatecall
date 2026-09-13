@@ -1,47 +1,24 @@
 // API Client for Backend Server
-// This replaces direct API calls to Supabase and Vapi
+// This replaces direct API calls to PostgreSQL and Vapi
 
-import { createClient } from '@supabase/supabase-js';
+import { getRequestToken, API_BASE_URL } from '../lib/session.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
-
-// Initialize Supabase client for auth token retrieval
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey)
-    : null;
-
-// Get the current user's auth token
-const getAuthToken = async () => {
-    if (!supabase) return null;
-
-    // Check if we're on localhost (bypass auth)
-    const isLocalhost = window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1';
-    if (isLocalhost) {
-        // Return null for localhost - backend should handle mock user
-        return null;
-    }
-
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token || null;
-};
 
 // Helper function for API requests
-const apiRequest = async (endpoint, options = {}) => {
+export const apiRequest = async (endpoint, options = {}) => {
     const url = `${API_BASE_URL}${endpoint}`;
 
     // Get auth token
-    const token = await getAuthToken();
+    const token = ['GET','HEAD'].includes(options.method || 'GET') ? null : await getRequestToken();
 
     const config = {
+        ...options,
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            ...(token ? { 'X-CSRF-Token': token } : {}),
             ...options.headers,
         },
-        ...options,
     };
 
     const response = await fetch(url, config);
@@ -61,33 +38,33 @@ const apiRequest = async (endpoint, options = {}) => {
 export const getHealth = () => apiRequest('/health');
 
 // =============================================
-// LEAD GENERATION - Claude Sonnet AI
+// LEAD RESEARCH - Search evidence + DeepInfra
 // =============================================
 
 export const leads = {
-    getStatus: () => apiRequest('/api/claude/status'),
+    getStatus: () => apiRequest('/api/research/status'),
 
     scrape: ({ keyword, location, maxResults, userId }) =>
-        apiRequest('/api/claude/generate-leads', {
+        apiRequest('/api/research/leads', {
             method: 'POST',
             body: JSON.stringify({ keyword, location, maxResults, userId }),
         }),
 
-    // Generate leads using Claude AI - returns results directly
-    scrapeAndWait: async ({ keyword, location, maxResults = 100, userId }, onStatusUpdate) => {
+    // Find leads using cited search evidence
+    scrapeAndWait: async ({ keyword, location, maxResults = 10, userId }, onStatusUpdate) => {
         if (onStatusUpdate) {
-            onStatusUpdate({ status: 'RUNNING', message: 'Generating leads with AI...' });
+            onStatusUpdate({ status: 'RUNNING', message: 'Searching the web for sourced business contacts...' });
         }
 
         try {
-            // Call Claude to generate leads - returns results directly
-            const response = await apiRequest('/api/claude/generate-leads', {
+            // Retrieve grounded contacts from the research API
+            const response = await apiRequest('/api/research/leads', {
                 method: 'POST',
                 body: JSON.stringify({ keyword, location, maxResults, userId }),
             });
 
             if (onStatusUpdate) {
-                onStatusUpdate({ status: 'SUCCEEDED', message: `Generated ${response.leads?.length || 0} leads` });
+                onStatusUpdate({ status: 'SUCCEEDED', message: `Found ${response.leads?.length || 0} sourced leads` });
             }
 
             // Return the leads array directly
@@ -111,11 +88,11 @@ export const isLeadsConfigured = async () => {
 };
 
 // =============================================
-// SUPABASE - Database Operations
+// POSTGRESQL - Database Operations
 // =============================================
 
-export const supabaseApi = {
-    getStatus: () => apiRequest('/api/supabase/status'),
+export const dataApi = {
+    getStatus: () => apiRequest('/api/data/status'),
 
     // Leads
     getLeads: (filters = {}) => {
@@ -125,59 +102,59 @@ export const supabaseApi = {
         if (filters.keyword) params.append('keyword', filters.keyword);
         if (filters.limit) params.append('limit', filters.limit);
         const query = params.toString();
-        return apiRequest(`/api/supabase/leads${query ? `?${query}` : ''}`);
+        return apiRequest(`/api/data/leads${query ? `?${query}` : ''}`);
     },
 
-    getLeadById: (id) => apiRequest(`/api/supabase/leads/${id}`),
+    getLeadById: (id) => apiRequest(`/api/data/leads/${id}`),
 
     saveLeads: (leads, searchKeyword, searchLocation) =>
-        apiRequest('/api/supabase/leads', {
+        apiRequest('/api/data/leads', {
             method: 'POST',
             body: JSON.stringify({ leads, searchKeyword, searchLocation }),
         }),
 
     updateLeadStatus: (id, status) =>
-        apiRequest(`/api/supabase/leads/${id}/status`, {
+        apiRequest(`/api/data/leads/${id}/status`, {
             method: 'PATCH',
             body: JSON.stringify({ status }),
         }),
 
     updateLead: (id, updates) =>
-        apiRequest(`/api/supabase/leads/${id}`, {
+        apiRequest(`/api/data/leads/${id}`, {
             method: 'PATCH',
             body: JSON.stringify(updates),
         }),
 
     updateLeadAfterCall: (id) =>
-        apiRequest(`/api/supabase/leads/${id}/after-call`, {
+        apiRequest(`/api/data/leads/${id}/after-call`, {
             method: 'PATCH',
         }),
 
     updateLeadIndustries: (updates) =>
-        apiRequest('/api/supabase/leads/industries', {
+        apiRequest('/api/data/leads/industries', {
             method: 'PATCH',
             body: JSON.stringify({ updates }),
         }),
 
-    getLeadsStats: () => apiRequest('/api/supabase/stats/leads'),
+    getLeadsStats: () => apiRequest('/api/data/stats/leads'),
 
     // Campaigns
-    getCampaigns: () => apiRequest('/api/supabase/campaigns'),
+    getCampaigns: () => apiRequest('/api/data/campaigns'),
 
     createCampaign: (campaign) =>
-        apiRequest('/api/supabase/campaigns', {
+        apiRequest('/api/data/campaigns', {
             method: 'POST',
             body: JSON.stringify(campaign),
         }),
 
     updateCampaignStats: (id, stats) =>
-        apiRequest(`/api/supabase/campaigns/${id}`, {
+        apiRequest(`/api/data/campaigns/${id}`, {
             method: 'PATCH',
             body: JSON.stringify(stats),
         }),
 
     updateCampaign: (id, updates) =>
-        apiRequest(`/api/supabase/campaigns/${id}`, {
+        apiRequest(`/api/data/campaigns/${id}`, {
             method: 'PATCH',
             body: JSON.stringify(updates),
         }),
@@ -188,45 +165,45 @@ export const supabaseApi = {
         if (filters.campaignId) params.append('campaignId', filters.campaignId);
         if (filters.limit) params.append('limit', filters.limit);
         const query = params.toString();
-        return apiRequest(`/api/supabase/calls${query ? `?${query}` : ''}`);
+        return apiRequest(`/api/data/calls${query ? `?${query}` : ''}`);
     },
 
     saveCall: (callData) =>
-        apiRequest('/api/supabase/calls', {
+        apiRequest('/api/data/calls', {
             method: 'POST',
             body: JSON.stringify(callData),
         }),
 
     updateCall: (id, updates) =>
-        apiRequest(`/api/supabase/calls/${id}`, {
+        apiRequest(`/api/data/calls/${id}`, {
             method: 'PATCH',
             body: JSON.stringify(updates),
         }),
 
-    getCallsStats: () => apiRequest('/api/supabase/stats/calls'),
+    getCallsStats: () => apiRequest('/api/data/stats/calls'),
 
     // Scrape Jobs
-    getScrapeJobs: (limit = 20) => apiRequest(`/api/supabase/scrape-jobs?limit=${limit}`),
+    getScrapeJobs: (limit = 20) => apiRequest(`/api/data/scrape-jobs?limit=${limit}`),
 
     saveScrapeJob: (job) =>
-        apiRequest('/api/supabase/scrape-jobs', {
+        apiRequest('/api/data/scrape-jobs', {
             method: 'POST',
             body: JSON.stringify(job),
         }),
 
     updateScrapeJob: (id, updates) =>
-        apiRequest(`/api/supabase/scrape-jobs/${id}`, {
+        apiRequest(`/api/data/scrape-jobs/${id}`, {
             method: 'PATCH',
             body: JSON.stringify(updates),
         }),
 
     // Dashboard
-    getDashboardStats: () => apiRequest('/api/supabase/dashboard'),
+    getDashboardStats: () => apiRequest('/api/data/dashboard'),
 };
 
-export const isSupabaseConfigured = async () => {
+export const isDatabaseConfigured = async () => {
     try {
-        const status = await supabaseApi.getStatus();
+        const status = await dataApi.getStatus();
         return status.configured;
     } catch {
         return false;
@@ -421,7 +398,7 @@ export const isVapiConfigured = async () => {
 // =============================================
 
 export const claudeApi = {
-    getStatus: () => apiRequest('/api/claude/status'),
+    getStatus: () => apiRequest('/api/research/status'),
 
     // Generate improved text for product pitch or company context
     generate: (input, type = 'product') =>
@@ -438,8 +415,8 @@ export const claudeApi = {
         }),
 
     // Generate leads using Claude AI
-    generateLeads: ({ keyword, location, maxResults = 100, userId }) =>
-        apiRequest('/api/claude/generate-leads', {
+    generateLeads: ({ keyword, location, maxResults = 10, userId }) =>
+        apiRequest('/api/research/leads', {
             method: 'POST',
             body: JSON.stringify({ keyword, location, maxResults, userId }),
         }),
@@ -516,6 +493,7 @@ export const emailApi = {
     replyToEmail: (userId, { responseId, subject, body, senderName, senderEmail, senderCompany }) =>
         apiRequest(`/api/email/responses/${responseId}/reply`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'x-user-id': userId },
             body: JSON.stringify({ subject, body, senderName, senderEmail, senderCompany }),
         }),
@@ -536,6 +514,7 @@ export const sequencesApi = {
     create: (userId, sequence) =>
         apiRequest('/api/sequences', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'x-user-id': userId },
             body: JSON.stringify(sequence),
         }),
@@ -565,6 +544,7 @@ export const sequencesApi = {
     activate: (userId, sequenceId, leadIds = []) =>
         apiRequest(`/api/sequences/${sequenceId}/activate`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'x-user-id': userId },
             body: JSON.stringify({ leadIds }),
         }),
@@ -573,6 +553,7 @@ export const sequencesApi = {
     pause: (userId, sequenceId) =>
         apiRequest(`/api/sequences/${sequenceId}/pause`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'x-user-id': userId }
         }),
 
@@ -580,6 +561,7 @@ export const sequencesApi = {
     resume: (userId, sequenceId) =>
         apiRequest(`/api/sequences/${sequenceId}/resume`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'x-user-id': userId }
         }),
 
@@ -605,6 +587,7 @@ export const sequencesApi = {
     stopEnrollment: (userId, sequenceId, enrollmentId, reason) =>
         apiRequest(`/api/sequences/${sequenceId}/enrollments/${enrollmentId}/stop`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'x-user-id': userId },
             body: JSON.stringify({ reason }),
         }),
@@ -613,6 +596,7 @@ export const sequencesApi = {
     resumeEnrollment: (userId, sequenceId, enrollmentId) =>
         apiRequest(`/api/sequences/${sequenceId}/enrollments/${enrollmentId}/resume`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'x-user-id': userId }
         }),
 };
@@ -632,6 +616,7 @@ export const workflowsApi = {
     create: (userId, workflow) =>
         apiRequest('/api/workflows', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'x-user-id': userId },
             body: JSON.stringify(workflow),
         }),
@@ -661,6 +646,7 @@ export const workflowsApi = {
     activate: (userId, workflowId, leadIds = []) =>
         apiRequest(`/api/workflows/${workflowId}/activate`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'x-user-id': userId },
             body: JSON.stringify({ leadIds }),
         }),
@@ -669,6 +655,7 @@ export const workflowsApi = {
     pause: (userId, workflowId) =>
         apiRequest(`/api/workflows/${workflowId}/pause`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'x-user-id': userId }
         }),
 
@@ -676,6 +663,7 @@ export const workflowsApi = {
     resume: (userId, workflowId) =>
         apiRequest(`/api/workflows/${workflowId}/resume`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'x-user-id': userId }
         }),
 
@@ -868,6 +856,7 @@ export const settingsApi = {
         const response = await fetch(`${API_BASE_URL}/api/settings/brand/logo`, {
             method: 'POST',
             body: formData,
+            headers: { 'X-CSRF-Token': await getRequestToken() },
             credentials: 'include',
         });
 
@@ -1010,7 +999,7 @@ export const adminApi = {
 export default {
     getHealth,
     leads,
-    supabaseApi,
+    dataApi,
     vapiApi,
     stripeApi,
     scheduledApi,
@@ -1024,9 +1013,15 @@ export default {
     emailTrackingApi,
     workflowsApi,
     isLeadsConfigured,
-    isSupabaseConfigured,
+    isDatabaseConfigured,
     isVapiConfigured,
     isClaudeConfigured,
     formatDuration,
     formatTranscript,
+};
+
+export const researchApi = {
+    industry: (keyword, location) => apiRequest('/api/research/industry', {
+        method: 'POST', body: JSON.stringify({ keyword, location }),
+    }),
 };

@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { workflowsApi, vapiApi } from '../services/api';
-import { getCampaigns } from '../services/supabase';
-import { useAuth } from '../context/AuthContext';
+import { getCampaigns } from '../services/database';
+import { useAuth } from '@/hooks/useAuth';
 import WorkflowBuilder from '../components/workflows/WorkflowBuilder';
 import WorkflowAnalytics from '../components/workflows/WorkflowAnalytics';
 import {
@@ -47,13 +47,7 @@ function Workflows() {
   const [selectedWorkflow, setSelectedWorkflow] = useState(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
-  useEffect(() => {
-    if (user?.id) {
-      loadData();
-    }
-  }, [user?.id]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [workflowsRes, campaignsData, assistantsRes] = await Promise.all([
@@ -69,7 +63,15 @@ function Workflows() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadData();
+    }
+  }, [loadData, user?.id]);
+
+
 
   const handleActivate = async (workflowId) => {
     setIsActionLoading(true);

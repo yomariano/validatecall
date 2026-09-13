@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { workflowsApi } from '../../services/api';
 import {
   ArrowLeft,
@@ -28,13 +28,7 @@ function WorkflowAnalytics({ workflow, userId, onBack }) {
   const [isLoading, setIsLoading] = useState(!workflow?.analytics);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (!workflow?.analytics) {
-      loadAnalytics();
-    }
-  }, [workflow?.id]);
-
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     setIsLoading(true);
     try {
       const result = await workflowsApi.getAnalytics(userId, workflow.id);
@@ -44,7 +38,15 @@ function WorkflowAnalytics({ workflow, userId, onBack }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId, workflow?.id]);
+
+  useEffect(() => {
+    if (!workflow?.analytics) {
+      loadAnalytics();
+    }
+  }, [loadAnalytics, workflow?.analytics, workflow?.id]);
+
+
 
   const getStepTypeIcon = (type) => {
     switch (type) {

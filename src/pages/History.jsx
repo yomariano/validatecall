@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getAllCalls, getCallDetails, formatDuration } from '../services/vapi';
-import { getCalls } from '../services/supabase';
+import { getCalls } from '../services/database';
 import {
   History as HistoryIcon,
   Phone,
@@ -29,17 +29,13 @@ function History() {
   const [isLoading, setIsLoading] = useState(true);
   const [source, setSource] = useState('vapi');
 
-  useEffect(() => {
-    loadCalls();
-  }, [source]);
-
-  const loadCalls = async () => {
+  const loadCalls = useCallback(async () => {
     setIsLoading(true);
     try {
       if (source === 'vapi') {
         const data = await getAllCalls(100);
         setCalls(data || []);
-      } else if (source === 'supabase') {
+      } else if (source === 'database') {
         const data = await getCalls({ limit: 100 });
         setCalls(data || []);
       }
@@ -48,7 +44,13 @@ function History() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [source]);
+
+  useEffect(() => {
+    loadCalls();
+  }, [loadCalls, source]);
+
+
 
   const viewCallDetails = async (callId) => {
     try {
@@ -94,7 +96,7 @@ function History() {
               className="w-auto text-sm"
             >
               <option value="vapi">From Vapi</option>
-              <option value="supabase">From Database</option>
+              <option value="database">From Database</option>
             </Select>
             <Button
               variant="secondary"

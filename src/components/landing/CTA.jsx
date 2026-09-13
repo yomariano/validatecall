@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from '@/hooks/useAuth';
 
 const benefits = [
   "14-day free trial",

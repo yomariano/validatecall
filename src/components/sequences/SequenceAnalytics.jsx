@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { sequencesApi } from '../../services/api';
 import {
   ArrowLeft,
@@ -25,7 +25,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
+
 
 function SequenceAnalytics({ sequence, userId, onBack }) {
   const [analytics, setAnalytics] = useState(null);
@@ -36,17 +36,7 @@ function SequenceAnalytics({ sequence, userId, onBack }) {
   const [enrollmentFilter, setEnrollmentFilter] = useState('all');
   const [showEnrollments, setShowEnrollments] = useState(false);
 
-  useEffect(() => {
-    loadAnalytics();
-  }, [sequence?.id]);
-
-  useEffect(() => {
-    if (showEnrollments) {
-      loadEnrollments();
-    }
-  }, [showEnrollments, enrollmentsPage, enrollmentFilter]);
-
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await sequencesApi.getAnalytics(userId, sequence.id);
@@ -56,9 +46,9 @@ function SequenceAnalytics({ sequence, userId, onBack }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [sequence?.id, userId]);
 
-  const loadEnrollments = async () => {
+  const loadEnrollments = useCallback(async () => {
     try {
       const filters = { page: enrollmentsPage, limit: 25 };
       if (enrollmentFilter !== 'all') {
@@ -70,7 +60,21 @@ function SequenceAnalytics({ sequence, userId, onBack }) {
     } catch (err) {
       console.error('Failed to load enrollments:', err);
     }
-  };
+  }, [enrollmentFilter, enrollmentsPage, sequence?.id, userId]);
+
+  useEffect(() => {
+    loadAnalytics();
+  }, [loadAnalytics, sequence?.id]);
+
+  useEffect(() => {
+    if (showEnrollments) {
+      loadEnrollments();
+    }
+  }, [showEnrollments, enrollmentsPage, enrollmentFilter, loadEnrollments]);
+
+
+
+
 
   const handleStopEnrollment = async (enrollmentId) => {
     try {
@@ -108,7 +112,7 @@ function SequenceAnalytics({ sequence, userId, onBack }) {
   // Calculate rates
   const openRate = stats.total_sent > 0 ? Math.round((stats.total_opens / stats.total_sent) * 100) : 0;
   const clickRate = stats.total_sent > 0 ? Math.round((stats.total_clicks / stats.total_sent) * 100) : 0;
-  const replyRate = stats.total_sent > 0 ? Math.round((stats.total_replies / stats.total_sent) * 100) : 0;
+
   const bounceRate = stats.total_sent > 0 ? Math.round((stats.total_bounces / stats.total_sent) * 100) : 0;
 
   const getStatusBadge = (status) => {

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from '@/hooks/useAuth';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

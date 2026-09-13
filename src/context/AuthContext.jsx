@@ -1,188 +1,39 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useState, useEffect } from 'react';
+import { apiRequest } from '@/services/api';
+import { loadSession, clearSession, API_BASE_URL } from '@/lib/session';
 import { AuthEvents } from '@/lib/analytics';
-
-const AuthContext = createContext();
-
-// Check if we're in localhost/development mode
-const IS_LOCALHOST = window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1';
-
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey)
-    : null;
-
-// API URL for backend calls
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
-
-/**
- * Send welcome email to new users (deduplication handled by backend)
- */
-async function sendWelcomeEmail(user) {
-    if (!user?.email) return;
-
-    try {
-        await fetch(`${API_URL}/api/email/welcome`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: user.id,
-                email: user.email,
-                name: user.user_metadata?.full_name || user.user_metadata?.name,
-            }),
-        });
-    } catch (err) {
-        console.warn('Failed to send welcome email:', err.message);
-    }
-}
-
-// Mock user for localhost development
-const MOCK_USER = {
-    id: '00000000-0000-0000-0000-000000000000',
-    email: 'dev@localhost.com',
-    user_metadata: {
-        full_name: 'Developer',
-        avatar_url: null,
-    },
-};
+import { AuthContext } from './AuthContextState';
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
     useEffect(() => {
-        // If localhost, bypass authentication
-        if (IS_LOCALHOST) {
-            console.log('🔓 Localhost detected - bypassing authentication');
-            setUser(MOCK_USER);
-            setLoading(false);
-            return;
-        }
-
-        // Otherwise, check Supabase session
-        if (!supabase) {
-            console.warn('Supabase not configured');
-            setLoading(false);
-            return;
-        }
-
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
-
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            (event, session) => {
-                setUser(session?.user ?? null);
-                setLoading(false);
-
-                // Send welcome email on sign in (deduplication handled by backend)
-                if (event === 'SIGNED_IN' && session?.user) {
-                    sendWelcomeEmail(session.user);
-                }
-            }
-        );
-
-        return () => subscription.unsubscribe();
+        let active = true;
+        loadSession().then(session => { if (active) setUser(session.user); })
+            .catch(err => { if (active) setError(err.message); })
+            .finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
     }, []);
-
     const signInWithGoogle = async () => {
         AuthEvents.googleSigninClicked();
-
-        if (IS_LOCALHOST) {
-            // In localhost, just set the mock user
-            setUser(MOCK_USER);
-            AuthEvents.signinSuccess('localhost');
-
-            // Ensure all "Sign in" buttons work in localhost (landing pages don't navigate)
-            if (window.location.pathname !== '/dashboard') {
-                window.location.assign('/dashboard');
-            }
-            return { user: MOCK_USER, error: null };
-        }
-
-        if (!supabase) {
-            setError('Authentication not configured');
-            return { user: null, error: 'Supabase not configured' };
-        }
-
+        setError(null);
         try {
-            const { data, error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/dashboard`,
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent',
-                    },
-                },
-            });
-
-            if (error) throw error;
-            AuthEvents.signinSuccess('google');
-            return { data, error: null };
-        } catch (err) {
-            setError(err.message);
-            return { user: null, error: err.message };
-        }
+            const { configured } = await apiRequest('/api/auth/config');
+            if (!configured) throw new Error('Google sign-in is not configured yet.');
+            window.location.assign(`${API_BASE_URL}/api/auth/google`);
+        } catch (err) { setError(err.message); }
     };
-
     const signOut = async () => {
-        AuthEvents.signout();
-
-        if (IS_LOCALHOST) {
-            // In localhost, just clear the mock user then set it back
-            // (simulating still having access after logout for dev convenience)
-            setUser(null);
-            setTimeout(() => setUser(MOCK_USER), 100);
-            return { error: null };
-        }
-
-        if (!supabase) {
-            return { error: 'Supabase not configured' };
-        }
-
         try {
-            const { error } = await supabase.auth.signOut();
-            if (error) throw error;
+            await apiRequest('/api/auth/logout', { method: 'POST' });
+            clearSession();
             setUser(null);
+            AuthEvents.signout();
             return { error: null };
-        } catch (err) {
-            setError(err.message);
-            return { error: err.message };
-        }
+        } catch (err) { setError(err.message); return { error: err.message }; }
     };
-
-    const value = {
-        user,
-        loading,
-        error,
-        isAuthenticated: !!user,
-        isLocalhost: IS_LOCALHOST,
-        signInWithGoogle,
-        signOut,
-        supabase,
-    };
-
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    );
+    return <AuthContext.Provider value={{ user, loading, error, isAuthenticated: Boolean(user), signInWithGoogle, signOut }}>
+        {children}
+    </AuthContext.Provider>;
 }
-
-export function useAuth() {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
-}
-
-export default AuthContext;

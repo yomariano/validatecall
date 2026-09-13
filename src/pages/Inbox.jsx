@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { emailApi } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,13 +30,7 @@ function Inbox() {
     const [replyContent, setReplyContent] = useState('');
     const [sending, setSending] = useState(false);
 
-    useEffect(() => {
-        if (user?.id) {
-            loadResponses();
-        }
-    }, [filter, user?.id]);
-
-    const loadResponses = async () => {
+    const loadResponses = useCallback(async () => {
         if (!user?.id) return;
         try {
             setLoading(true);
@@ -49,7 +43,15 @@ function Inbox() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter, user?.id]);
+
+  useEffect(() => {
+        if (user?.id) {
+            loadResponses();
+        }
+    }, [filter, loadResponses, user?.id]);
+
+
 
     const handleSelectEmail = async (email) => {
         setSelectedEmail(email);

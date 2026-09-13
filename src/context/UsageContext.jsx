@@ -1,12 +1,12 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { useAuth } from './AuthContext';
+import { apiRequest } from '@/services/api';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
-const UsageContext = createContext();
+import { UsageContext } from './UsageContextState';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 
 export function UsageProvider({ children }) {
-    const { user, isLocalhost } = useAuth();
+    const { user } = useAuth();
     const [usage, setUsage] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -19,23 +19,8 @@ export function UsageProvider({ children }) {
             return;
         }
 
-        // Bypass for localhost development
-        if (isLocalhost) {
-            setUsage({
-                isFreeTier: false,
-                subscription: { planId: 'dev', status: 'active' },
-                usage: null
-            });
-            setLoading(false);
-            return;
-        }
-
         try {
-            const response = await fetch(`${API_BASE}/api/usage/${user.id}`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch usage');
-            }
-            const data = await response.json();
+            const data = await apiRequest(`/api/usage/${user.id}`);
             setUsage(data);
             setError(null);
         } catch (err) {
@@ -58,7 +43,7 @@ export function UsageProvider({ children }) {
         } finally {
             setLoading(false);
         }
-    }, [user?.id, isLocalhost]);
+    }, [user?.id]);
 
     // Fetch on mount and when user changes
     useEffect(() => {
@@ -149,13 +134,3 @@ export function UsageProvider({ children }) {
         </UsageContext.Provider>
     );
 }
-
-export function useUsage() {
-    const context = useContext(UsageContext);
-    if (!context) {
-        throw new Error('useUsage must be used within a UsageProvider');
-    }
-    return context;
-}
-
-export default UsageContext;

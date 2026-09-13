@@ -27,7 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input, Textarea, Select, Label, FormGroup } from '@/components/ui/input';
 import { EmptyState, LoadingState } from '@/components/ui/loading';
-import { cn } from '@/lib/utils';
+
 import VoiceTestModal from '@/components/VoiceTestModal';
 
 // Voice provider options
@@ -243,7 +243,7 @@ function Agents() {
   };
 
   // AI generation handler for agent text fields
-  const handleAiGenerate = async (field, type) => {
+  const handleAiGenerate = async (field) => {
     const input = aiInput[field];
     if (!input.trim()) {
       setError('Please describe what you want to generate');

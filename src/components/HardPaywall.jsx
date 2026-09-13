@@ -95,7 +95,7 @@ function HardPaywall({
 
                 {/* Plans preview */}
                 <div className="grid md:grid-cols-3 gap-4 mb-8">
-                    {plans.map((plan, index) => (
+                    {plans.map((plan) => (
                         <div
                             key={plan.name}
                             className={cn(

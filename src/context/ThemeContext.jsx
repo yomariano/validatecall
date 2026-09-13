@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 
-const ThemeContext = createContext();
+import { ThemeContext } from './ThemeContextState';
 
 // Single light theme with white background
 const theme = {
@@ -49,12 +49,4 @@ export function ThemeProvider({ children }) {
             {children}
         </ThemeContext.Provider>
     );
-}
-
-export function useTheme() {
-    const context = useContext(ThemeContext);
-    if (!context) {
-        throw new Error('useTheme must be used within a ThemeProvider');
-    }
-    return context;
 }

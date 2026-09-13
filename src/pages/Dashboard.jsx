@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getDashboardStats, getLeads, getCalls } from '../services/supabase';
+import { getDashboardStats, getLeads, getCalls } from '../services/database';
 import { getAllCalls } from '../services/vapi';
 import { getHealth } from '../services/api';
 import {
@@ -72,15 +72,15 @@ function Dashboard() {
     }
   };
 
-  const [configStatus, setConfigStatus] = useState({ vapi: false, supabase: false, claude: false });
+  const [configStatus, setConfigStatus] = useState({ vapi: false, postgres: false, research: false });
   const [allConfigured, setAllConfigured] = useState(false);
 
   useEffect(() => {
     const checkServices = async () => {
       try {
         const health = await getHealth();
-        setConfigStatus(health.services || { vapi: false, supabase: false, claude: false });
-        setAllConfigured(health.services?.vapi && health.services?.supabase && health.services?.claude);
+        setConfigStatus(health.services || { vapi: false, postgres: false, research: false });
+        setAllConfigured(health.services?.vapi && health.services?.postgres && health.services?.research);
       } catch {
         // Backend not available
       }
@@ -138,21 +138,21 @@ function Dashboard() {
       {!allConfigured && (
         <Alert variant="info">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Complete Setup</AlertTitle>
+          <AlertTitle>Available Features</AlertTitle>
           <AlertDescription>
-            <p>Configure the following services in your <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">.env</code> file:</p>
+            <p>CSV import is available. Additional features become available when your workspace integrations are connected:</p>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div className={`flex items-center gap-2 ${configStatus.vapi ? 'text-muted-foreground' : ''}`}>
                 {configStatus.vapi ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Clock className="h-4 w-4" />}
-                <span className="text-sm">Vapi.ai API</span>
+                <span className="text-sm">Voice calls</span>
               </div>
-              <div className={`flex items-center gap-2 ${configStatus.supabase ? 'text-muted-foreground' : ''}`}>
-                {configStatus.supabase ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Clock className="h-4 w-4" />}
-                <span className="text-sm">Supabase Database</span>
+              <div className={`flex items-center gap-2 ${configStatus.postgres ? 'text-muted-foreground' : ''}`}>
+                {configStatus.postgres ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Clock className="h-4 w-4" />}
+                <span className="text-sm">Saved leads & campaigns</span>
               </div>
-              <div className={`flex items-center gap-2 ${configStatus.claude ? 'text-muted-foreground' : ''}`}>
-                {configStatus.claude ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Clock className="h-4 w-4" />}
-                <span className="text-sm">Claude AI (Lead Gen)</span>
+              <div className={`flex items-center gap-2 ${configStatus.research ? 'text-muted-foreground' : ''}`}>
+                {configStatus.research ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Clock className="h-4 w-4" />}
+                <span className="text-sm">Web research</span>
               </div>
             </div>
           </AlertDescription>
@@ -178,8 +178,7 @@ function Dashboard() {
                 </div>
                 <div className="flex items-center gap-1 mt-4 text-sm text-muted-foreground">
                   <ArrowUpRight className="h-4 w-4 text-success" />
-                  <span className="text-success font-medium">+12%</span>
-                  <span>from last month</span>
+                  <span>Saved in your workspace</span>
                 </div>
               </CardContent>
             </Card>
@@ -197,8 +196,7 @@ function Dashboard() {
                 </div>
                 <div className="flex items-center gap-1 mt-4 text-sm text-muted-foreground">
                   <ArrowUpRight className="h-4 w-4 text-success" />
-                  <span className="text-success font-medium">+8%</span>
-                  <span>completion rate</span>
+                  <span>Completed calls</span>
                 </div>
               </CardContent>
             </Card>

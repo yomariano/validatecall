@@ -1,49 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Search, Phone, ArrowRight, CheckCircle2, Circle } from 'lucide-react';
+import { X, ArrowRight, CheckCircle2, Circle } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 
-const ONBOARDING_KEY = 'validatecall_onboarding_completed';
-const ONBOARDING_STEP_KEY = 'validatecall_onboarding_step';
-
-const steps = [
-  {
-    id: 1,
-    title: 'Find Leads',
-    description: 'Search for businesses on Google Maps by keyword and location. We\'ll scrape their contact information automatically.',
-    icon: Search,
-    action: 'Find Leads',
-    path: '/leads',
-    tip: 'Try searching for "restaurants in Dublin" or "plumbers in Cork"',
-  },
-  {
-    id: 2,
-    title: 'Campaigns',
-    description: 'Create targeted calling campaigns for different industries. Select leads and let our voice AI pitch your product and gather feedback.',
-    icon: Phone,
-    action: 'Create Campaign',
-    path: '/campaigns',
-    tip: 'Create separate campaigns for different industries for better targeting',
-  },
-];
+import { ONBOARDING_KEY, steps } from '@/lib/onboarding';
 
 export function OnboardingWizard({ forceShow = false, onClose }) {
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
   const [currentStep, setCurrentStep] = useState(0);
-
-  useEffect(() => {
-    if (forceShow) {
-      setIsOpen(true);
-      return;
-    }
-
-    const completed = localStorage.getItem(ONBOARDING_KEY);
-    if (!completed) {
-      setIsOpen(true);
-    }
-  }, [forceShow]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -70,7 +36,7 @@ export function OnboardingWizard({ forceShow = false, onClose }) {
     onClose?.();
   };
 
-  if (!isOpen) return null;
+  if (!forceShow && !isOpen) return null;
 
   const step = steps[currentStep];
   const StepIcon = step.icon;
@@ -193,41 +159,6 @@ export function OnboardingWizard({ forceShow = false, onClose }) {
       </div>
     </div>
   );
-}
-
-// Hook to check onboarding status and get current step
-export function useOnboarding() {
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true);
-  const [currentUserStep, setCurrentUserStep] = useState(0);
-
-  useEffect(() => {
-    const completed = localStorage.getItem(ONBOARDING_KEY);
-    setHasCompletedOnboarding(!!completed);
-
-    const step = localStorage.getItem(ONBOARDING_STEP_KEY);
-    setCurrentUserStep(step ? parseInt(step) : 0);
-  }, []);
-
-  const completeStep = (stepNumber) => {
-    const newStep = Math.max(currentUserStep, stepNumber);
-    setCurrentUserStep(newStep);
-    localStorage.setItem(ONBOARDING_STEP_KEY, newStep.toString());
-  };
-
-  const resetOnboarding = () => {
-    localStorage.removeItem(ONBOARDING_KEY);
-    localStorage.removeItem(ONBOARDING_STEP_KEY);
-    setHasCompletedOnboarding(false);
-    setCurrentUserStep(0);
-  };
-
-  return {
-    hasCompletedOnboarding,
-    currentUserStep,
-    completeStep,
-    resetOnboarding,
-    steps,
-  };
 }
 
 // Sidebar step indicator component

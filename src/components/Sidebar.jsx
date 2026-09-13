@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+
 import {
   LayoutDashboard,
   Search,
@@ -24,9 +24,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/context/AuthContext';
-import { useUsage } from '@/context/UsageContext';
-import { useOnboarding } from './OnboardingWizard';
+import { useAuth } from '@/hooks/useAuth';
+import { useUsage } from '@/hooks/useUsage';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { UsageDisplay } from '@/components/UsageMeter';
 
 const navItems = [
@@ -44,13 +44,13 @@ const navItems = [
 ];
 
 function Sidebar({ onShowWizard, isOpen, onClose }) {
-  const { user, isLocalhost, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { isFreeTier, leadsUsed, leadsLimit, callsUsed, callsLimit, subscription } = useUsage();
   const { currentUserStep, hasCompletedOnboarding } = useOnboarding();
 
   const handleSignOut = async () => {
-    await signOut();
-    window.location.href = '/';
+    const { error } = await signOut();
+    if (!error) window.location.href = '/';
   };
 
   // Close sidebar on navigation (mobile)
@@ -82,13 +82,14 @@ function Sidebar({ onShowWizard, isOpen, onClose }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-screen w-72 border-r border-border bg-card flex flex-col transition-transform duration-300 ease-in-out",
+          "fixed left-0 top-0 z-50 h-dvh w-72 border-r border-border bg-card flex flex-col transition-transform duration-300 ease-in-out",
           // Mobile: translate off-screen when closed
           isOpen ? "translate-x-0" : "-translate-x-full",
           // Desktop: always visible
           "md:translate-x-0"
         )}
       >
+        <div className="min-h-0 flex-1 overflow-y-auto">
         {/* Logo Header - Enterprise Style */}
         <div className="flex h-20 items-center gap-4 border-b border-border px-6">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary">
@@ -235,8 +236,8 @@ function Sidebar({ onShowWizard, isOpen, onClose }) {
             </Badge>
           </NavLink>
 
-          {/* Admin link - visible in localhost or for admin users */}
-          {isLocalhost && (
+          {/* Admin link - authenticated role */}
+          {user?.is_admin && (
             <NavLink
               to="/admin"
               onClick={handleNavClick}
@@ -259,10 +260,10 @@ function Sidebar({ onShowWizard, isOpen, onClose }) {
         </div>
 
         {/* Spacer */}
-        <div className="flex-1" />
+        </div>
 
         {/* Footer */}
-        <div className="border-t border-border p-4 space-y-4 bg-card">
+        <div className="shrink-0 border-t border-border p-4 space-y-4 bg-card">
           {/* User Profile */}
           <div>
             <div className="flex items-center gap-3">
@@ -280,11 +281,6 @@ function Sidebar({ onShowWizard, isOpen, onClose }) {
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-medium text-foreground truncate flex items-center">
                   {userName}
-                  {isLocalhost && (
-                    <Badge variant="info" className="ml-2 text-[9px] py-0">
-                      Dev
-                    </Badge>
-                  )}
                 </span>
                 <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
               </div>
@@ -301,7 +297,7 @@ function Sidebar({ onShowWizard, isOpen, onClose }) {
           {/* Status */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground pt-3 border-t border-border">
             <div className="flex h-2 w-2 rounded-full bg-success" />
-            <span>All systems operational</span>
+            <span>Signed in</span>
           </div>
         </div>
       </aside>

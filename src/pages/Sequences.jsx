@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { sequencesApi, emailTrackingApi } from '../services/api';
-import { getCampaigns } from '../services/supabase';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
+import { sequencesApi } from "../services/api";
+import { getCampaigns } from '../services/database';
+import { useAuth } from '@/hooks/useAuth';
 import SequenceBuilder from '../components/sequences/SequenceBuilder';
 import SequenceAnalytics from '../components/sequences/SequenceAnalytics';
 import {
@@ -48,13 +48,7 @@ function Sequences() {
   const [isActionLoading, setIsActionLoading] = useState(false);
 
   // Load data
-  useEffect(() => {
-    if (user?.id) {
-      loadData();
-    }
-  }, [user?.id]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [sequencesRes, campaignsData] = await Promise.all([
@@ -68,7 +62,15 @@ function Sequences() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadData();
+    }
+  }, [loadData, user?.id]);
+
+
 
   // Actions
   const handleActivate = async (sequenceId) => {

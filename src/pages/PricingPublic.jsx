@@ -105,7 +105,7 @@ const plans = [
 const PricingPublic = () => {
   const handleSubscribe = (stripeLink) => {
     // Redirect to Stripe payment link
-    window.location.href = stripeLink;
+    window.location.assign(stripeLink);
   };
 
   return (

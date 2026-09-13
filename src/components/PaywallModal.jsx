@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from "react";
 import { Link } from 'react-router-dom';
 import { X, Zap, Users, Phone, TrendingUp, Clock, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+
 import { PaywallEvents } from '@/lib/analytics';
 
 /**

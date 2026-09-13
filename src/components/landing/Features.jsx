@@ -3,8 +3,8 @@ import { BarChart3, Globe, Mail, PhoneCall, Users, Wand2 } from "lucide-react";
 const features = [
   {
     icon: Globe,
-    title: "Lead database for any industry",
-    description: "Search 100+ industries and pull targeted leads by location, company size, and more.",
+    title: "Sourced business contacts",
+    description: "Search business sources by industry and location, or import your existing contacts.",
   },
   {
     icon: Wand2,

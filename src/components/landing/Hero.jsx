@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from '@/hooks/useAuth';
 import { ArrowRight, Bot, Globe, Mail, PhoneCall, Search, Wand2, Zap } from "lucide-react";
 import { useMemo, useState } from "react";
 
 const Hero = () => {
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, error } = useAuth();
   const [industry, setIndustry] = useState("Dentist");
   const [location, setLocation] = useState("Austin, TX");
   const [previewTab, setPreviewTab] = useState("call");
@@ -118,6 +118,7 @@ const Hero = () => {
                 </Button>
               </div>
 
+              {error && <p role="alert" className="mb-4 text-sm text-destructive">{error}</p>}
               <p className="text-xs text-muted-foreground animate-fade-up" style={{ animationDelay: "0.35s" }}>
                 Build a list, generate a pitch, launch a campaign—without hiring.
               </p>
@@ -125,7 +126,7 @@ const Hero = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 mt-10 animate-fade-up" style={{ animationDelay: "0.4s" }}>
                 {[
                   { value: "100+", label: "Industries" },
-                  { value: "50M+", label: "Leads" },
+                  { value: "Web + CSV", label: "Lead sources" },
                   { value: "Email + Calls", label: "Outreach" },
                   { value: "Minutes", label: "Time to launch" },
                 ].map((stat) => (
@@ -153,7 +154,7 @@ const Hero = () => {
                   </div>
                   <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
                     <Bot className="h-4 w-4 text-primary" />
-                    AI-generated
+                    Example preview
                   </div>
                 </div>
 

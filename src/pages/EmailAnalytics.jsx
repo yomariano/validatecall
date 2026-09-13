@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { emailTrackingApi, sequencesApi } from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import {
   BarChart3,
   Mail,
@@ -42,13 +42,7 @@ function EmailAnalytics() {
   // Date range
   const [dateRange, setDateRange] = useState('30'); // days
 
-  useEffect(() => {
-    if (user?.id) {
-      loadData();
-    }
-  }, [user?.id, dateRange]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     setError('');
 
@@ -72,7 +66,15 @@ function EmailAnalytics() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [dateRange, user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadData();
+    }
+  }, [user?.id, dateRange, loadData]);
+
+
 
   const getEventIcon = (eventType) => {
     switch (eventType) {

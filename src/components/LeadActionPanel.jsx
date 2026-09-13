@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { vapiApi, scheduledApi, claudeApi, supabaseApi, emailApi } from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { vapiApi, scheduledApi, claudeApi, dataApi, emailApi } from '../services/api';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Phone,
   X,
@@ -362,7 +362,7 @@ export default function LeadActionPanel({
   const handleSaveEdit = async () => {
     setIsSavingEdit(true);
     try {
-      await supabaseApi.updateLead(lead.id, {
+      await dataApi.updateLead(lead.id, {
         name: editName.trim(),
         phone: editPhone.trim(),
         email: editEmail.trim() || null,

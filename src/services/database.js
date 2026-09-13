@@ -1,40 +1,37 @@
-// Supabase Service - Proxied through Backend API
+// PostgreSQL Service - Proxied through Backend API
 // All API keys are now securely stored on the server
 
-import { supabaseApi, isSupabaseConfigured } from './api.js';
+import { dataApi, isDatabaseConfigured } from './api.js';
 
 // Re-export the configured check
-export { isSupabaseConfigured };
-
-// Legacy: Keep supabase export for any direct usage (will be null)
-export const supabase = null;
+export { isDatabaseConfigured };
 
 // =============================================
 // LEADS
 // =============================================
 
 export const saveLeads = async (leads, searchKeyword, searchLocation) => {
-  return supabaseApi.saveLeads(leads, searchKeyword, searchLocation);
+  return dataApi.saveLeads(leads, searchKeyword, searchLocation);
 };
 
 export const getLeads = async (filters = {}) => {
-  return supabaseApi.getLeads(filters);
+  return dataApi.getLeads(filters);
 };
 
 export const getLeadById = async (id) => {
-  return supabaseApi.getLeadById(id);
+  return dataApi.getLeadById(id);
 };
 
 export const updateLeadStatus = async (id, status) => {
-  return supabaseApi.updateLeadStatus(id, status);
+  return dataApi.updateLeadStatus(id, status);
 };
 
 export const updateLeadAfterCall = async (id) => {
-  return supabaseApi.updateLeadAfterCall(id);
+  return dataApi.updateLeadAfterCall(id);
 };
 
 export const getLeadsStats = async () => {
-  return supabaseApi.getLeadsStats();
+  return dataApi.getLeadsStats();
 };
 
 // =============================================
@@ -42,19 +39,19 @@ export const getLeadsStats = async () => {
 // =============================================
 
 export const createCampaign = async (campaign) => {
-  return supabaseApi.createCampaign(campaign);
+  return dataApi.createCampaign(campaign);
 };
 
 export const getCampaigns = async () => {
-  return supabaseApi.getCampaigns();
+  return dataApi.getCampaigns();
 };
 
 export const updateCampaignStats = async (campaignId, stats) => {
-  return supabaseApi.updateCampaignStats(campaignId, stats);
+  return dataApi.updateCampaignStats(campaignId, stats);
 };
 
 export const updateCampaign = async (campaignId, updates) => {
-  return supabaseApi.updateCampaign(campaignId, updates);
+  return dataApi.updateCampaign(campaignId, updates);
 };
 
 // =============================================
@@ -62,19 +59,19 @@ export const updateCampaign = async (campaignId, updates) => {
 // =============================================
 
 export const saveCall = async (callData) => {
-  return supabaseApi.saveCall(callData);
+  return dataApi.saveCall(callData);
 };
 
 export const getCalls = async (filters = {}) => {
-  return supabaseApi.getCalls(filters);
+  return dataApi.getCalls(filters);
 };
 
 export const updateCall = async (id, updates) => {
-  return supabaseApi.updateCall(id, updates);
+  return dataApi.updateCall(id, updates);
 };
 
 export const getCallsStats = async () => {
-  return supabaseApi.getCallsStats();
+  return dataApi.getCallsStats();
 };
 
 // =============================================
@@ -82,15 +79,15 @@ export const getCallsStats = async () => {
 // =============================================
 
 export const saveScrapeJob = async (job) => {
-  return supabaseApi.saveScrapeJob(job);
+  return dataApi.saveScrapeJob(job);
 };
 
 export const updateScrapeJob = async (id, updates) => {
-  return supabaseApi.updateScrapeJob(id, updates);
+  return dataApi.updateScrapeJob(id, updates);
 };
 
 export const getScrapeJobs = async (limit = 20) => {
-  return supabaseApi.getScrapeJobs(limit);
+  return dataApi.getScrapeJobs(limit);
 };
 
 // =============================================
@@ -98,5 +95,5 @@ export const getScrapeJobs = async (limit = 20) => {
 // =============================================
 
 export const getDashboardStats = async () => {
-  return supabaseApi.getDashboardStats();
+  return dataApi.getDashboardStats();
 };

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Check, Zap, TestTube, Rocket, Loader2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { stripeApi, emailApi } from '../services/api';
 import { PaywallEvents } from '@/lib/analytics';
 
@@ -114,22 +114,7 @@ export default function Pricing() {
   const [loading, setLoading] = useState(true);
   const [managingSubscription, setManagingSubscription] = useState(false);
 
-  useEffect(() => {
-    loadSubscription();
-  }, [user]);
-
-  // Track pricing page view for abandoned upgrade triggers
-  useEffect(() => {
-    if (user?.id && !subscription) {
-      emailApi.trackEvent({
-        userId: user.id,
-        eventType: 'pricing_page_view',
-        pageUrl: window.location.href,
-      });
-    }
-  }, [user?.id, subscription]);
-
-  const loadSubscription = async () => {
+  const loadSubscription = useCallback(async () => {
     if (!user?.id) {
       setLoading(false);
       return;
@@ -143,7 +128,24 @@ export default function Pricing() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    loadSubscription();
+  }, [loadSubscription, user]);
+
+  // Track pricing page view for abandoned upgrade triggers
+  useEffect(() => {
+    if (user?.id && !subscription) {
+      emailApi.trackEvent({
+        userId: user.id,
+        eventType: 'pricing_page_view',
+        pageUrl: window.location.href,
+      });
+    }
+  }, [user?.id, subscription]);
+
+
 
   const handleSubscribe = (plan) => {
     // Track plan selection

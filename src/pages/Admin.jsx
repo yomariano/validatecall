@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { adminApi } from '@/services/api';
 import { Shield, Mail, Zap, BarChart3, Users, Send, Trash2, Power, PowerOff } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,11 +28,7 @@ export default function Admin() {
     });
     const [sending, setSending] = useState(false);
 
-    useEffect(() => {
-        loadData();
-    }, [user?.id]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         if (!user?.id) return;
 
         try {
@@ -55,7 +51,13 @@ export default function Admin() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.id]);
+
+  useEffect(() => {
+        loadData();
+    }, [loadData, user?.id]);
+
+
 
     const handleCreateCampaign = async (e) => {
         e.preventDefault();

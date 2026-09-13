@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from "react";
 import { workflowsApi } from '../../services/api';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import UnsavedChangesDialog from '../ui/UnsavedChangesDialog';
