@@ -42,8 +42,8 @@ function PaywallModal({
             title: 'Running Low on Leads',
             description: `You've used ${used} of your ${limit} free leads. Only ${remaining} remaining!`,
             benefits: [
-                'Unlimited lead generation',
-                'Access to 50M+ verified contacts',
+                'Higher lead limits',
+                'CSV import and sourced web research',
                 'Advanced filtering & export',
                 'Priority support'
             ]
@@ -53,7 +53,7 @@ function PaywallModal({
             title: 'Running Low on Calls',
             description: `You've made ${used} of your ${limit} free calls. Only ${remaining} remaining!`,
             benefits: [
-                'Unlimited AI voice calls',
+                'More AI voice calls with a paid plan',
                 'No 2-minute call limit',
                 'Multiple phone numbers',
                 'Call analytics & recordings'

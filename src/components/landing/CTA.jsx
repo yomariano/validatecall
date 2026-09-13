@@ -4,10 +4,10 @@ import { Link } from "react-router-dom";
 import { useAuth } from '@/hooks/useAuth';
 
 const benefits = [
-  "14-day free trial",
+  "Sign in with Google",
   "No credit card required",
-  "100 free AI calls",
-  "Cancel anytime",
+  "Import your contacts",
+  "Choose a plan when ready",
 ];
 
 const CTA = () => {

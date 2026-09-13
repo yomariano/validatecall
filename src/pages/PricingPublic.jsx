@@ -249,7 +249,7 @@ const PricingPublic = () => {
               <div>
                 <h4 className="font-semibold mb-2">Is there a free trial?</h4>
                 <p className="text-sm text-muted-foreground">
-                  Yes! All plans include a 14-day free trial with 10 free research calls to test the platform.
+                  You can create a free workspace with limits of 10 leads and 5 calls. Calling requires a connected provider. Review the plan and checkout terms before upgrading.
                 </p>
               </div>
               <div>

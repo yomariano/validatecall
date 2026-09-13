@@ -133,9 +133,9 @@ const Testimonials = () => {
             </div>
             <div>
               <div className="font-display text-3xl md:text-4xl font-bold text-gradient mb-1">
-                50M+
+                CSV
               </div>
-              <div className="text-sm text-muted-foreground">Leads</div>
+              <div className="text-sm text-muted-foreground">Contact imports</div>
             </div>
             <div>
               <div className="font-display text-3xl md:text-4xl font-bold text-gradient mb-1">
