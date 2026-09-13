@@ -95,7 +95,7 @@ function History() {
               onChange={(e) => setSource(e.target.value)}
               className="w-auto text-sm"
             >
-              <option value="vapi">From Vapi</option>
+              <option value="vapi">From AssistantFleet</option>
               <option value="database">From Database</option>
             </Select>
             <Button
