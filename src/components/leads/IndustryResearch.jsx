@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { researchApi } from '@/services/api';
 import { Button } from '@/components/ui/button';
 
-export default function IndustryResearch({ keyword, location }) {
+export default function IndustryResearch({ keyword, location, startingUrls = [] }) {
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -11,7 +11,7 @@ export default function IndustryResearch({ keyword, location }) {
         setError('');
         setResult(null);
         try {
-            const data = await researchApi.industry(keyword, location);
+            const data = await researchApi.industry(keyword, location, startingUrls);
             setResult({ ...data, keyword, location });
         } catch (err) { setError(err.message); }
         finally { setLoading(false); }
@@ -35,7 +35,8 @@ export default function IndustryResearch({ keyword, location }) {
                     </a>)}
                 </div>
             </div>)}
-            <p className="text-xs text-muted-foreground">AI summary of web search evidence. Review the linked sources before relying on a finding.</p>
+            {result.warnings?.length > 0 && <p className="text-xs text-muted-foreground">Some websites could not be read. Findings cover only the accessible sources.</p>}
+            <p className="text-xs text-muted-foreground">AI summary of visited web pages. Review the linked sources before relying on a finding.</p>
         </div>}
     </div>;
 }

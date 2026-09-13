@@ -27,9 +27,11 @@ for the HttpOnly session cookie (e.g. `app.validatecall.com` and `api.validateca
 
 ## Research
 
-Lead search and industry research use the API's Brave Search + DeepInfra integration. Results
-include source links; contact details without supporting search evidence are left empty.
-Search snippets can be incomplete or outdated, so review sources before using a contact.
+Lead and industry research use DeepInfra with a bounded text browser, without a paid search API.
+Add up to three starting business or directory URLs, or let AI propose websites to check.
+The crawler reads up to six pages and follows relevant links. It is not a complete search index;
+blocked or JavaScript-only pages may be unavailable. Results include source links; contact details
+without supporting page evidence are left empty. Review sources before using a contact.
 CSV and pasted-data imports work without research provider keys.
 
 Google sign-in uses only openid/email/profile. It does not read Gmail or request mailbox access.

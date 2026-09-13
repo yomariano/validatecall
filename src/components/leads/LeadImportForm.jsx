@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { FormGroup, Input, Select, Textarea } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-export default function LeadImportForm({ setImportTab, importTab, keyword, setKeyword, isScraping, location, setLocation, maxResults, setMaxResults, handleScrape, scrapeStatus, fileInputRef, handleFileUpload, downloadSampleCSV, pasteData, setPasteData, handlePasteImport, isImporting }) {
+export default function LeadImportForm({ setImportTab, importTab, keyword, setKeyword, isScraping, location, setLocation, websiteInput, setWebsiteInput, startingUrls, maxResults, setMaxResults, handleScrape, scrapeStatus, fileInputRef, handleFileUpload, downloadSampleCSV, pasteData, setPasteData, handlePasteImport, isImporting }) {
   return (<Card className="border-white/20 bg-white/40 backdrop-blur-xl shadow-2xl animate-scale-in">
           <CardHeader className="pb-4 border-b border-border/10 px-4 sm:px-6">
             <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth -mx-1 px-1">
@@ -65,6 +65,10 @@ export default function LeadImportForm({ setImportTab, importTab, keyword, setKe
                     </div>
                   </FormGroup>
                 </div>
+                <FormGroup label="Starting websites (optional)">
+                  <Textarea aria-label="Starting websites" value={websiteInput} onChange={e => setWebsiteInput(e.target.value)} disabled={isScraping} rows={2} placeholder="https://business.example/contact" />
+                  <p className="text-xs text-muted-foreground">Add up to three business or directory URLs, one per line. Otherwise AI chooses candidate websites and checks their pages. This is a focused crawl, not a complete web search.</p>
+                </FormGroup>
                 <div className="grid md:grid-cols-2 gap-4 sm:gap-8 pt-2 sm:pt-4">
                   <FormGroup label="Max Results" className="space-y-2">
                     <div className="relative">
@@ -96,7 +100,7 @@ export default function LeadImportForm({ setImportTab, importTab, keyword, setKe
                       ) : (
                         <div className="flex items-center gap-2">
                           <Bot className="h-5 w-5" />
-                          <span>Start Automated Search</span>
+                          <span>Research Websites</span>
                         </div>
                       )}
                     </Button>
@@ -105,10 +109,10 @@ export default function LeadImportForm({ setImportTab, importTab, keyword, setKe
                 <div className="flex items-center gap-2 pt-2">
                   <div className="h-1 w-1 rounded-full bg-primary" />
                   <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-70">
-                    Web research • sourced contacts • results may be fewer than requested
+                    Up to 6 pages per run • sourced business contacts • results may be fewer than requested
                   </p>
                 </div>
-                <IndustryResearch keyword={keyword} location={location} />
+                <IndustryResearch keyword={keyword} location={location} startingUrls={startingUrls} />
               </>
             )}
 

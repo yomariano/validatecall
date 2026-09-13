@@ -83,6 +83,8 @@ function Leads() {
   // Scraping state
   const [keyword, setKeyword] = useState('');
   const [location, setLocation] = useState('');
+  const [websiteInput, setWebsiteInput] = useState('');
+  const startingUrls = websiteInput.split(/[\s,]+/).filter(Boolean);
   const [maxResults, setMaxResults] = useState(10);
   const [isScraping, setIsScraping] = useState(false);
   const [scrapeStatus, setScrapeStatus] = useState('');
@@ -391,7 +393,7 @@ function Leads() {
 
     try {
       const results = await scrapeAndWait(
-        { keyword, location, maxResults, userId: user?.id },
+        { keyword, location, maxResults, userId: user?.id, startingUrls },
         (status) => setScrapeStatus(status.message)
       );
 
@@ -940,7 +942,7 @@ function Leads() {
         )}
 
         {/* Import Methods */}
-        <LeadImportForm {...{ setImportTab, importTab, keyword, setKeyword, isScraping, location, setLocation, maxResults, setMaxResults, handleScrape, scrapeStatus, fileInputRef, handleFileUpload, downloadSampleCSV, pasteData, setPasteData, handlePasteImport, isImporting }} />
+        <LeadImportForm {...{ setImportTab, importTab, keyword, setKeyword, isScraping, location, setLocation, websiteInput, setWebsiteInput, startingUrls, maxResults, setMaxResults, handleScrape, scrapeStatus, fileInputRef, handleFileUpload, downloadSampleCSV, pasteData, setPasteData, handlePasteImport, isImporting }} />
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8">

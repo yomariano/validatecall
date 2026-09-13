@@ -38,29 +38,29 @@ export const apiRequest = async (endpoint, options = {}) => {
 export const getHealth = () => apiRequest('/health');
 
 // =============================================
-// LEAD RESEARCH - Search evidence + DeepInfra
+// LEAD RESEARCH - Direct website browsing + DeepInfra
 // =============================================
 
 export const leads = {
     getStatus: () => apiRequest('/api/research/status'),
 
-    scrape: ({ keyword, location, maxResults, userId }) =>
+    scrape: ({ keyword, location, maxResults, userId, startingUrls = [] }) =>
         apiRequest('/api/research/leads', {
             method: 'POST',
-            body: JSON.stringify({ keyword, location, maxResults, userId }),
+            body: JSON.stringify({ keyword, location, maxResults, userId, startingUrls }),
         }),
 
     // Find leads using cited search evidence
-    scrapeAndWait: async ({ keyword, location, maxResults = 10, userId }, onStatusUpdate) => {
+    scrapeAndWait: async ({ keyword, location, maxResults = 10, userId, startingUrls = [] }, onStatusUpdate) => {
         if (onStatusUpdate) {
-            onStatusUpdate({ status: 'RUNNING', message: 'Searching the web for sourced business contacts...' });
+            onStatusUpdate({ status: 'RUNNING', message: 'Browsing business websites and contact pages…' });
         }
 
         try {
             // Retrieve grounded contacts from the research API
             const response = await apiRequest('/api/research/leads', {
                 method: 'POST',
-                body: JSON.stringify({ keyword, location, maxResults, userId }),
+                body: JSON.stringify({ keyword, location, maxResults, userId, startingUrls }),
             });
 
             if (onStatusUpdate) {
@@ -1021,7 +1021,7 @@ export default {
 };
 
 export const researchApi = {
-    industry: (keyword, location) => apiRequest('/api/research/industry', {
-        method: 'POST', body: JSON.stringify({ keyword, location }),
+    industry: (keyword, location, startingUrls = []) => apiRequest('/api/research/industry', {
+        method: 'POST', body: JSON.stringify({ keyword, location, startingUrls }),
     }),
 };

@@ -1,17 +1,17 @@
-// Lead Generation Service - Uses Claude Sonnet via Backend API
+// Sourced business research using the backend's DeepInfra browser workflow.
 // All API keys are securely stored on the server
 
 import { leads, isLeadsConfigured } from './api.js';
 
-// Re-export the configured check (checks if Claude API is configured)
+// Check whether the server has the research model configured.
 export { isLeadsConfigured };
 
-// Generate leads using Claude AI
-export const scrapeGoogleMaps = async ({ keyword, location, maxResults = 100, userId }) => {
-  return leads.scrape({ keyword, location, maxResults, userId });
+// Legacy method name retained for existing callers.
+export const scrapeGoogleMaps = async ({ keyword, location, maxResults = 10, userId, startingUrls = [] }) => {
+  return leads.scrape({ keyword, location, maxResults, userId, startingUrls });
 };
 
-// Generate leads with Claude AI and return results directly
-export const scrapeAndWait = async ({ keyword, location, maxResults = 100, userId }, onStatusUpdate) => {
-  return leads.scrapeAndWait({ keyword, location, maxResults, userId }, onStatusUpdate);
+// Browse sources and return only contacts supported by retrieved pages.
+export const scrapeAndWait = async ({ keyword, location, maxResults = 10, userId, startingUrls = [] }, onStatusUpdate) => {
+  return leads.scrapeAndWait({ keyword, location, maxResults, userId, startingUrls }, onStatusUpdate);
 };
