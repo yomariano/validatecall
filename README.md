@@ -33,3 +33,6 @@ Search snippets can be incomplete or outdated, so review sources before using a 
 CSV and pasted-data imports work without research provider keys.
 
 Google sign-in uses only openid/email/profile. It does not read Gmail or request mailbox access.
+
+For Coolify, use the repository Dockerfile and port 80. Public `VITE_*` variables are build
+arguments. The final container serves static assets through Nginx; Node is only used to build.
