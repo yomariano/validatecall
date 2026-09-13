@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { FormGroup, Textarea, Input, Select } from '@/components/ui/input';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 
-export default function CampaignDetails({ setViewingCampaign, setActiveCampaign, setSelectedAgentId, setCampaignCompanyContext, setCampaignCallPitch, setCampaignEmailSubject, setCampaignEmailBody, setCampaignSenderEmail, setCampaignSenderName, setCampaignCtaText, setCampaignCtaUrl, setActiveTab, setCampaignSettingsOpen, campaignSettingsOpen, campaignCallPitch, campaignEmailBody, campaignCompanyContext, campaignSenderName, verifiedDomains, campaignSenderEmail, selectedAgentId, setIsTestModalOpen, voiceAgents, handleGenerateCampaignPitch, isGeneratingPitch, handleGenerateCampaignEmail, isGeneratingEmail, campaignEmailSubject, handleSendTestEmail, isSendingTestEmail, campaignCtaText, campaignCtaUrl, saveCampaignTemplates, isSavingTemplates, viewingCampaign, getStatusBadge, campaignLeads, activeCampaign, isCalling, callProgress, phoneStats, callAllLeads, callResults, startCampaign, openPanel }) {
+export default function CampaignDetails({ setViewingCampaign, setActiveCampaign, setSelectedAgentId, setCampaignCompanyContext, setCampaignCallPitch, setCampaignEmailSubject, setCampaignEmailBody, setCampaignSenderEmail, setCampaignSenderName, setCampaignCtaText, setCampaignCtaUrl, setActiveTab, setCampaignSettingsOpen, campaignSettingsOpen, campaignCallPitch, campaignEmailBody, campaignCompanyContext, campaignSenderName, verifiedDomains, campaignSenderEmail, selectedAgentId, setIsTestModalOpen, voiceAgents, handleGenerateCampaignPitch, isGeneratingPitch, handleGenerateCampaignEmail, isGeneratingEmail, campaignEmailSubject, handleSendTestEmail, isSendingTestEmail, campaignCtaText, campaignCtaUrl, saveCampaignTemplates, isSavingTemplates, viewingCampaign, getStatusBadge, campaignLeads, activeCampaign, isCalling, callProgress, phoneStats, phoneReadiness, callAllLeads, callResults, startCampaign, openPanel }) {
   return (<div className="space-y-6">
         {/* Back button */}
         <Button
@@ -29,6 +29,21 @@ export default function CampaignDetails({ setViewingCampaign, setActiveCampaign,
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Campaigns
         </Button>
+
+        <Card>
+          <CardHeader><CardTitle>Calling numbers</CardTitle></CardHeader>
+          <CardContent className="space-y-2" aria-live="polite">
+            <p className="text-sm text-muted-foreground">Calls use a connected Telnyx number from the destination country.</p>
+            {!phoneReadiness ? <p>Checking phone setup…</p> : phoneReadiness.error ? <p role="alert">{phoneReadiness.error}</p> : (
+              <>
+                <p>{phoneReadiness.ready ? 'Calling numbers are ready.' : 'Phone setup required before calling.'}</p>
+                {phoneReadiness.outboundEnabled === false && <p className="text-sm">Outbound calling is disabled. Dedicated ValidateCall numbers must be configured before enabling calls.</p>}
+                {[...new Set(phoneReadiness.destinations.map(item => item.ready
+                  ? `${item.country}: ${item.callerNumber}` : item.error))].map(message => <p className="text-sm" key={message}>{message}</p>)}
+              </>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Campaign Settings Section */}
         <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
@@ -192,10 +207,10 @@ export default function CampaignDetails({ setViewingCampaign, setActiveCampaign,
                             <div className="space-y-2">
                               <div className="flex items-center gap-2">
                                 <Badge variant="outline" className="text-xs">
-                                  {agent.voice?.provider || 'Unknown'} voice
+                                  {agent.voice || 'Default'} voice
                                 </Badge>
                                 <Badge variant="secondary" className="text-xs">
-                                  {agent.model?.model || 'gpt-4o-mini'}
+                                  {agent.model || 'AssistantFleet'}
                                 </Badge>
                               </div>
                               {agent.firstMessage && (
@@ -477,7 +492,7 @@ export default function CampaignDetails({ setViewingCampaign, setActiveCampaign,
                   variant="gradient"
                   size="lg"
                   onClick={callAllLeads}
-                  disabled={isCalling || (phoneStats && phoneStats.remainingToday === 0) || callResults.length === campaignLeads.length}
+                  disabled={isCalling || !phoneReadiness?.ready || (phoneStats && phoneStats.remainingToday === 0) || callResults.length === campaignLeads.length}
                   className="w-full"
                 >
                   {isCalling ? (

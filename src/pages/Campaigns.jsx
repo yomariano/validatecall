@@ -78,6 +78,7 @@ function Campaigns() {
   const [campaigns, setCampaigns] = useState([]);
   const [leads, setLeads] = useState([]);
   const [selectedLeadIds, setSelectedLeadIds] = useState(location.state?.selectedLeadIds || []);
+  const [phoneReadiness, setPhoneReadiness] = useState(null);
   const [phoneStats, setPhoneStats] = useState(null);
 
   // View state: 'new' | 'active' | 'detail'
@@ -298,6 +299,19 @@ function Campaigns() {
     setSearchIndustry('');
   };
 
+  useEffect(() => {
+    let current = true;
+    setPhoneReadiness(null);
+    if (viewingCampaign?.leads?.length) {
+      const remaining = viewingCampaign.leads.filter(lead =>
+        !viewingCampaign.callResults?.some(result => result.leadId === lead.id && result.status === 'initiated'));
+      if (remaining.length) vapiApi.phoneReadiness(remaining.map(lead => lead.phone || ''))
+        .then(result => { if (current) setPhoneReadiness(result); })
+        .catch(error => { if (current) setPhoneReadiness({ ready: false, error: error.message }); });
+    }
+    return () => { current = false; };
+  }, [viewingCampaign]);
+
   // Save campaign
   const saveCampaign = async () => {
     setError('');
@@ -486,6 +500,15 @@ function Campaigns() {
         setShowPaywallModal(true);
       }
     }
+
+    try {
+      const readiness = await vapiApi.phoneReadiness(uncalledLeads.map(lead => lead.phone || ''));
+      setPhoneReadiness(readiness);
+      if (!readiness.ready) {
+        setError(readiness.error || readiness.destinations.find(item => !item.ready)?.error || 'Connect your calling numbers first.');
+        return;
+      }
+    } catch (error) { setError(error.message); return; }
 
     setIsCalling(true);
     setCallProgress({ current: 0, total: uncalledLeads.length, results: [] });
@@ -757,7 +780,7 @@ function Campaigns() {
     const callResults = viewingCampaign.callResults || [];
 
     return (
-      <CampaignDetails {...{ setViewingCampaign, setActiveCampaign, setSelectedAgentId, setCampaignCompanyContext, setCampaignCallPitch, setCampaignEmailSubject, setCampaignEmailBody, setCampaignSenderEmail, setCampaignSenderName, setCampaignCtaText, setCampaignCtaUrl, setActiveTab, setCampaignSettingsOpen, campaignSettingsOpen, campaignCallPitch, campaignEmailBody, campaignCompanyContext, campaignSenderName, verifiedDomains, campaignSenderEmail, selectedAgentId, setIsTestModalOpen, voiceAgents, handleGenerateCampaignPitch, isGeneratingPitch, handleGenerateCampaignEmail, isGeneratingEmail, campaignEmailSubject, handleSendTestEmail, isSendingTestEmail, campaignCtaText, campaignCtaUrl, saveCampaignTemplates, isSavingTemplates, viewingCampaign, getStatusBadge, campaignLeads, activeCampaign, isCalling, callProgress, phoneStats, callAllLeads, callResults, startCampaign, openPanel }} />
+      <CampaignDetails {...{ setViewingCampaign, setActiveCampaign, setSelectedAgentId, setCampaignCompanyContext, setCampaignCallPitch, setCampaignEmailSubject, setCampaignEmailBody, setCampaignSenderEmail, setCampaignSenderName, setCampaignCtaText, setCampaignCtaUrl, setActiveTab, setCampaignSettingsOpen, campaignSettingsOpen, campaignCallPitch, campaignEmailBody, campaignCompanyContext, campaignSenderName, verifiedDomains, campaignSenderEmail, selectedAgentId, setIsTestModalOpen, voiceAgents, handleGenerateCampaignPitch, isGeneratingPitch, handleGenerateCampaignEmail, isGeneratingEmail, campaignEmailSubject, handleSendTestEmail, isSendingTestEmail, campaignCtaText, campaignCtaUrl, saveCampaignTemplates, isSavingTemplates, viewingCampaign, getStatusBadge, campaignLeads, activeCampaign, isCalling, callProgress, phoneStats, phoneReadiness, callAllLeads, callResults, startCampaign, openPanel }} />
     );
   };
 
@@ -990,7 +1013,8 @@ function Campaigns() {
                             <TableRow>
                               <TableHead className="w-10">
                                 <button
-                                  onClick={selectAllVisible}
+                                  aria-label="Select all visible leads"
+                          onClick={selectAllVisible}
                                   disabled={isCalling}
                                   className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                                 >
@@ -1194,7 +1218,7 @@ function Campaigns() {
                             </TableCell>
                             <TableCell>
                               <span className="text-success">{campaign.calls_completed || 0}</span>
-                              <span className="text-muted-foreground"> / {campaign.calls_made || 0}</span>
+                              <span className="text-muted-foreground"> / {campaign.total_leads || 0}</span>
                             </TableCell>
                             <TableCell className="text-muted-foreground">
                               <span className="flex items-center gap-1.5">

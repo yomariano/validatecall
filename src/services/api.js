@@ -215,75 +215,76 @@ export const isDatabaseConfigured = async () => {
 // =============================================
 
 export const vapiApi = {
-    getStatus: () => apiRequest('/api/vapi/status'),
+    phoneReadiness: (phoneNumbers) => apiRequest('/api/telephony/readiness', { method: 'POST', body: JSON.stringify({ phoneNumbers }) }),
+    getStatus: () => apiRequest('/api/voice/status'),
 
     initiateCall: ({ phoneNumber, customerName, productIdea, companyContext, assistant, assistantId }) =>
-        apiRequest('/api/vapi/call', {
+        apiRequest('/api/voice/call', {
             method: 'POST',
             body: JSON.stringify({ phoneNumber, customerName, productIdea, companyContext, assistant, assistantId }),
         }),
 
     batchInitiateCalls: ({ phoneNumbers, productIdea, companyContext, delayMs }) =>
-        apiRequest('/api/vapi/calls/batch', {
+        apiRequest('/api/voice/calls/batch', {
             method: 'POST',
             body: JSON.stringify({ phoneNumbers, productIdea, companyContext, delayMs }),
         }),
 
-    getCallStatus: (callId) => apiRequest(`/api/vapi/calls/${callId}`),
+    getCallStatus: (callId) => apiRequest(`/api/voice/calls/${callId}`),
 
-    getAllCalls: (limit = 100) => apiRequest(`/api/vapi/calls?limit=${limit}`),
+    getAllCalls: (limit = 100) => apiRequest(`/api/voice/calls?limit=${limit}`),
 
     // Get all assistants with their full configuration (voice, provider, etc.)
-    getAssistants: (limit = 100) => apiRequest(`/api/vapi/assistants?limit=${limit}`),
+    getAssistants: (limit = 100) => apiRequest(`/api/voice/assistants?limit=${limit}`),
 
     // Get a single assistant by ID
-    getAssistant: (assistantId) => apiRequest(`/api/vapi/assistants/${assistantId}`),
+    getAssistant: (assistantId) => apiRequest(`/api/voice/assistants/${assistantId}`),
 
     // Create a new assistant
     createAssistant: (config) =>
-        apiRequest('/api/vapi/assistants', {
+        apiRequest('/api/voice/assistants', {
             method: 'POST',
             body: JSON.stringify(config),
         }),
 
     // Update an assistant
     updateAssistant: (assistantId, updates) =>
-        apiRequest(`/api/vapi/assistants/${assistantId}`, {
+        apiRequest(`/api/voice/assistants/${assistantId}`, {
             method: 'PATCH',
             body: JSON.stringify(updates),
         }),
 
     // Delete an assistant
     deleteAssistant: (assistantId) =>
-        apiRequest(`/api/vapi/assistants/${assistantId}`, {
+        apiRequest(`/api/voice/assistants/${assistantId}`, {
             method: 'DELETE',
         }),
 
     // Get available voices
-    getVoices: () => apiRequest('/api/vapi/voices'),
+    getVoices: () => apiRequest('/api/voice/voices'),
 
     // Get public key for web SDK (real-time voice testing)
-    getPublicKey: () => apiRequest('/api/vapi/public-key'),
+    getTestToken: (id) => apiRequest(`/api/voice/assistants/${id}/test-token`, {method:'POST', body:'{}'}),
 
     parsePhoneNumbers: (input) =>
-        apiRequest('/api/vapi/parse-phones', {
+        apiRequest('/api/voice/parse-phones', {
             method: 'POST',
             body: JSON.stringify({ input }),
         }),
 
     // Multi-tenant endpoints (per-user phone numbers)
-    getUserPhoneStats: (userId) => apiRequest(`/api/vapi/user/${userId}/phone-stats`),
+    getUserPhoneStats: (userId) => apiRequest(`/api/voice/user/${userId}/phone-stats`),
 
-    getUserPhoneNumbers: (userId) => apiRequest(`/api/vapi/user/${userId}/phone-numbers`),
+    getUserPhoneNumbers: (userId) => apiRequest(`/api/voice/user/${userId}/phone-numbers`),
 
     initiateUserCall: (userId, { phoneNumber, customerName, productIdea, companyContext, assistant, assistantId }) =>
-        apiRequest(`/api/vapi/user/${userId}/call`, {
+        apiRequest(`/api/voice/user/${userId}/call`, {
             method: 'POST',
             body: JSON.stringify({ phoneNumber, customerName, productIdea, companyContext, assistant, assistantId }),
         }),
 
     batchInitiateUserCalls: (userId, { phoneNumbers, productIdea, companyContext, delayMs }) =>
-        apiRequest(`/api/vapi/user/${userId}/calls/batch`, {
+        apiRequest(`/api/voice/user/${userId}/calls/batch`, {
             method: 'POST',
             body: JSON.stringify({ phoneNumbers, productIdea, companyContext, delayMs }),
         }),
