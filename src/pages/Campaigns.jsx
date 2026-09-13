@@ -431,7 +431,7 @@ function Campaigns() {
 
     // Scroll to top and show feedback
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setSuccess(`Campaign "${campaign.name}" is now active! Click "Call All" to start calling ${campaignLeads.length} leads.`);
+    setSuccess(`Campaign "${campaign.name}" selected. Review the calling numbers and complete setup before starting calls.`);
   };
 
   // Save campaign templates
