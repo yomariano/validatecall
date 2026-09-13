@@ -4,7 +4,7 @@ import VoiceTestModal from '../components/VoiceTestModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input, Textarea, FormGroup, Select } from '@/components/ui/input';
-const empty = { name:'', instructions:'', first_message:'Hi, this is an AI assistant calling for a short research conversation. Is now a good time?', realtime_provider:'openai', model:'gpt-realtime-2.1', voice:'marin', language:'en', voicemail_action:'hang_up', end_call_enabled:true };
+const empty = { name:'', instructions:'', first_message:'Hi, this is an AI assistant calling for a short research conversation. Is now a good time?', realtime_provider:'openai', model:'gpt-realtime-2.1', voice:'marin', language:'en', voicemail_action:'hang_up', end_call_enabled:true, live_settings:{backend_model:'gpt-5.6-luna',reasoning_effort:'low'} };
 export default function Agents() {
   const [agents,setAgents]=useState([]), [form,setForm]=useState(null), [editing,setEditing]=useState(null);
   const [error,setError]=useState(''), [busy,setBusy]=useState(false), [testing,setTesting]=useState(null);
@@ -17,6 +17,7 @@ export default function Agents() {
     } catch(error){setError(error.message);} finally{setBusy(false);}
   };
   const field=(key,value)=>setForm(previous=>({...previous,[key]:value}));
+  const liveField=(key,value)=>setForm(previous=>({...previous,live_settings:{...previous.live_settings,[key]:value}}));
   return <div className="space-y-6">
     <div className="flex items-center justify-between"><div><h1 className="text-3xl font-bold">Voice Agents</h1><p className="text-muted-foreground">Create AssistantFleet agents for your campaigns.</p></div>
       <Button onClick={()=>{setEditing(null);setForm({...empty});}}>Create Voice Agent</Button></div>
@@ -27,7 +28,12 @@ export default function Agents() {
         <FormGroup label="Agent Name"><Input required maxLength={120} value={form.name} onChange={event=>field('name',event.target.value)} placeholder="e.g., ValidateCall Research Assistant" /></FormGroup>
         <FormGroup label="Instructions"><Textarea required value={form.instructions} onChange={event=>field('instructions',event.target.value)} placeholder="Explain the agent’s purpose, questions to ask, and when to end the conversation." rows={8}/></FormGroup>
         <FormGroup label="First Message"><Textarea value={form.first_message} onChange={event=>field('first_message',event.target.value)} /></FormGroup>
-        <FormGroup label="Voice"><Select value={form.voice} onChange={event=>field('voice',event.target.value)}><option value="marin">Marin</option><option value="cedar">Cedar</option></Select></FormGroup>
+        <FormGroup label="Voice Model"><Select value={form.model} onChange={event=>setForm(previous=>({...previous,model:event.target.value,voice:'marin'}))}><option value="gpt-realtime-2.1">GPT Realtime 2.1</option><option value="gpt-live-1">GPT Live</option></Select></FormGroup>
+        {form.model==='gpt-live-1'&&<>
+          <FormGroup label="Reasoning Model"><Select value={form.live_settings?.backend_model||'gpt-5.6-luna'} onChange={event=>liveField('backend_model',event.target.value)}><option value="gpt-5.6-luna">Luna</option><option value="gpt-5.6-terra">Terra</option><option value="gpt-5.6-sol">Sol</option></Select></FormGroup>
+          <FormGroup label="Reasoning Effort"><Select value={form.live_settings?.reasoning_effort||'low'} onChange={event=>liveField('reasoning_effort',event.target.value)}>{['none','low','medium','high','xhigh','max'].map(value=><option key={value} value={value}>{value}</option>)}</Select></FormGroup>
+        </>}
+        <FormGroup label="Voice"><Select value={form.voice} onChange={event=>field('voice',event.target.value)}><option value="marin">Marin</option>{form.model==='gpt-live-1'?<><option value="willow">Willow (Irish)</option><option value="stone">Stone (Irish)</option></>:<option value="cedar">Cedar</option>}</Select></FormGroup>
         <FormGroup label="Language"><Select value={form.language} onChange={event=>field('language',event.target.value)}><option value="en">English</option><option value="es">Spanish</option><option value="pt">Portuguese</option><option value="fr">French</option><option value="de">German</option></Select></FormGroup>
         <FormGroup label="Voicemail"><Select value={form.voicemail_action} onChange={event=>field('voicemail_action',event.target.value)}><option value="hang_up">End the call</option><option value="continue">Continue the conversation</option></Select></FormGroup>
         <div className="flex gap-2"><Button type="submit" disabled={busy}>{busy?'Saving…':'Save Voice Agent'}</Button><Button type="button" variant="outline" onClick={()=>setForm(null)}>Cancel</Button></div>
@@ -35,7 +41,7 @@ export default function Agents() {
     </CardContent></Card>}
     {!agents.length&&!form&&<Card><CardContent className="py-12 text-center">No voice agents yet. Create an agent, then select it in a campaign.</CardContent></Card>}
     <div className="grid gap-4 md:grid-cols-2">{agents.map(agent=><Card key={agent.id}><CardHeader><CardTitle>{agent.name}</CardTitle></CardHeader><CardContent className="space-y-3">
-      <p className="text-sm">{agent.first_message}</p><p className="text-sm text-muted-foreground">AssistantFleet · {agent.voice} · {agent.language}</p>
+      <p className="text-sm">{agent.first_message}</p><p className="text-sm text-muted-foreground">AssistantFleet · {agent.model==='gpt-live-1'?`GPT Live · ${agent.live_settings?.backend_model||'gpt-5.6-terra'} · ${agent.live_settings?.reasoning_effort||'low'}`:agent.model} · {agent.voice} · {agent.language}</p>
       <div className="flex gap-2"><Button variant="outline" onClick={()=>{setEditing(agent.id);setForm(Object.fromEntries(Object.keys(empty).map(key=>[key,agent[key]??empty[key]])));}}>Edit</Button>
         <Button variant="outline" onClick={()=>setTesting(agent)}>Test in Browser</Button>
         <Button variant="ghost" onClick={async()=>{if(!window.confirm(`Delete ${agent.name}?`))return;try{await voiceApi.deleteAssistant(agent.id);await load();}catch(error){setError(error.message);}}}>Delete</Button></div>
