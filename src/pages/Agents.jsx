@@ -8,7 +8,7 @@ const empty = { name:'', instructions:'', first_message:'Hi, this is an AI assis
 export default function Agents() {
   const [agents,setAgents]=useState([]), [form,setForm]=useState(null), [editing,setEditing]=useState(null);
   const [error,setError]=useState(''), [busy,setBusy]=useState(false), [testing,setTesting]=useState(null);
-  const load=async()=>{ const result=await voiceApi.getAssistants(); setAgents(result.assistants||[]); };
+  const load=async()=>{ const result=await voiceApi.getAssistants(); setAgents(Array.isArray(result)?result:result.assistants||[]); };
   useEffect(()=>{load().catch(error=>setError(error.message));},[]);
   const save=async(event)=>{
     event.preventDefault(); setError(''); setBusy(true);
