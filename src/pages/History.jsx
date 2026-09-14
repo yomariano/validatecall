@@ -11,8 +11,7 @@ import {
   User,
   Mic,
   MessageSquare,
-  Bot,
-  Play
+  Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -28,6 +27,8 @@ function History() {
   const [selectedCall, setSelectedCall] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [source, setSource] = useState('vapi');
+  const [detailsError, setDetailsError] = useState('');
+  const [loadingCallId, setLoadingCallId] = useState(null);
 
   const loadCalls = useCallback(async () => {
     setIsLoading(true);
@@ -53,11 +54,25 @@ function History() {
 
 
   const viewCallDetails = async (callId) => {
+    setDetailsError('');
+    setLoadingCallId(callId);
     try {
       const details = await getCallDetails(callId);
-      setSelectedCall(details);
+      let messages = details.messages || details.transcript_json || [];
+      if (typeof messages === 'string') {
+        try { messages = JSON.parse(messages); } catch { messages = []; }
+      }
+      setSelectedCall({
+        ...details,
+        customer: { number: details.customer?.number || details.phone_number, name: details.customer?.name || details.customer_name || details.lead?.name },
+        duration: details.duration ?? details.duration_seconds,
+        createdAt: details.createdAt || details.created_at,
+        messages: Array.isArray(messages) ? messages.map(message => ({ ...message, message: message.message || message.text })) : [],
+      });
     } catch (err) {
-      console.error('Error loading call details:', err);
+      setDetailsError(err.message || 'Unable to load this call. Please try again.');
+    } finally {
+      setLoadingCallId(null);
     }
   };
 
@@ -110,6 +125,7 @@ function History() {
           </div>
         </CardHeader>
         <CardContent>
+          {detailsError && <p role="alert" className="mb-4 text-sm text-destructive">{detailsError}</p>}
           {isLoading ? (
             <LoadingState message="Loading calls..." />
           ) : calls.length === 0 ? (
@@ -138,7 +154,7 @@ function History() {
                       {call.customer?.number || call.phone_number}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {call.customer?.name || call.lead?.name || '-'}
+                      {call.customer?.name || call.customer_name || call.lead?.name || '-'}
                     </TableCell>
                     <TableCell>{getStatusBadge(call.status)}</TableCell>
                     <TableCell className="text-muted-foreground">
@@ -155,9 +171,10 @@ function History() {
                         variant="ghost"
                         size="sm"
                         onClick={() => viewCallDetails(call.id || call.vapi_call_id)}
+                        disabled={loadingCallId !== null}
                       >
                         <Eye className="h-4 w-4" />
-                        View
+                        {loadingCallId === (call.id || call.vapi_call_id) ? 'Loading…' : 'View'}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -176,16 +193,20 @@ function History() {
           onClick={() => setSelectedCall(null)}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="call-details-title"
             className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl animate-scale-in"
             onClick={e => e.stopPropagation()}
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
+              <h2 id="call-details-title" className="text-xl font-semibold flex items-center gap-2">
                 <Phone className="h-5 w-5 text-primary" />
                 Call Details
               </h2>
               <button
+                aria-label="Close call details"
                 onClick={() => setSelectedCall(null)}
                 className="rounded-full p-2 hover:bg-secondary transition-colors"
               >
@@ -247,6 +268,12 @@ function History() {
               )}
 
               {/* Transcript */}
+              {!selectedCall.messages?.length && (
+                <div className="rounded-xl border border-border p-4">
+                  <h3 className="text-sm font-semibold mb-3">Transcript</h3>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{typeof selectedCall.transcript === 'string' && selectedCall.transcript.trim() ? selectedCall.transcript : 'No transcript is available for this call yet.'}</p>
+                </div>
+              )}
               {selectedCall.messages && selectedCall.messages.length > 0 && (
                 <div className="rounded-xl border border-border p-4">
                   <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">

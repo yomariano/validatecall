@@ -230,7 +230,7 @@ export const vapiApi = {
             body: JSON.stringify({ phoneNumbers, productIdea, companyContext, delayMs }),
         }),
 
-    getCallStatus: (callId) => apiRequest(`/api/voice/calls/${callId}`),
+    getCallStatus: (callId) => apiRequest(`/api/voice/calls/${encodeURIComponent(callId)}`),
 
     getAllCalls: (limit = 100) => apiRequest(`/api/voice/calls?limit=${limit}`),
 

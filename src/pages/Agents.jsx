@@ -4,7 +4,7 @@ import VoiceTestModal from '../components/VoiceTestModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input, Textarea, FormGroup, Select } from '@/components/ui/input';
-const empty = { name:'', instructions:'', first_message:'Hi, this is an AI assistant calling for a short research conversation. Is now a good time?', realtime_provider:'openai', model:'gpt-realtime-2.1', voice:'marin', language:'en', voicemail_action:'hang_up', end_call_enabled:true, live_settings:{backend_model:'gpt-5.6-luna',reasoning_effort:'low'} };
+const empty = { name:'', instructions:'', first_message:'Hi, this is an AI assistant calling for a short research conversation. Is now a good time?', realtime_provider:'openai', model:'gpt-realtime-2.1', voice:'marin', language:'en', voicemail_action:'hang_up', voicemail_message:'', end_call_enabled:true, live_settings:{backend_model:'gpt-5.6-luna',reasoning_effort:'low'} };
 export default function Agents() {
   const [agents,setAgents]=useState([]), [form,setForm]=useState(null), [editing,setEditing]=useState(null);
   const [error,setError]=useState(''), [busy,setBusy]=useState(false), [testing,setTesting]=useState(null);
@@ -35,7 +35,8 @@ export default function Agents() {
         </>}
         <FormGroup label="Voice"><Select value={form.voice} onChange={event=>field('voice',event.target.value)}><option value="marin">Marin</option>{form.model==='gpt-live-1'?<><option value="willow">Willow (Irish)</option><option value="stone">Stone (Irish)</option></>:<option value="cedar">Cedar</option>}</Select></FormGroup>
         <FormGroup label="Language"><Select value={form.language} onChange={event=>field('language',event.target.value)}><option value="en">English</option><option value="es">Spanish</option><option value="pt">Portuguese</option><option value="fr">French</option><option value="de">German</option></Select></FormGroup>
-        <FormGroup label="Voicemail"><Select value={form.voicemail_action} onChange={event=>field('voicemail_action',event.target.value)}><option value="hang_up">End the call</option><option value="continue">Continue the conversation</option></Select></FormGroup>
+        <FormGroup label="Voicemail"><Select value={form.voicemail_action} onChange={event=>field('voicemail_action',event.target.value)}><option value="hang_up">End the call</option><option value="leave_message">Leave a message</option><option value="continue">Continue the conversation</option></Select></FormGroup>
+        {form.voicemail_action==='leave_message'&&<FormGroup label="Voicemail Message"><Textarea required value={form.voicemail_message} onChange={event=>field('voicemail_message',event.target.value)} placeholder="The message to leave after the tone, including how to contact you." rows={4}/></FormGroup>}
         <div className="flex gap-2"><Button type="submit" disabled={busy}>{busy?'Saving…':'Save Voice Agent'}</Button><Button type="button" variant="outline" onClick={()=>setForm(null)}>Cancel</Button></div>
       </form>
     </CardContent></Card>}
