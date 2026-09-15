@@ -33,7 +33,7 @@ export default function CallerNumberSelect({ caller, id, disabled = false }) {
             {caller.error ? <p className="text-destructive">{caller.error} Use Refresh to try again.</p>
                 : caller.loading ? <p>Checking which numbers you can use for this call.</p>
                 : !caller.numbers.length ? <p>No calling numbers are available to your account. Ask your workspace administrator to assign one.</p>
-                : caller.selectedNumber ? <p>Your contact will see {caller.selectedNumber.phoneNumber}. {caller.selectedNumber.remainingToday} calls available today.</p>
+                : caller.selectedNumber ? <p>Your contact will see {caller.selectedNumber.phoneNumber}. {caller.selectedNumber.unlimitedDailyCalls ? 'Unlimited daily calls.' : `${caller.selectedNumber.remainingToday.toLocaleString()} calls available today.`}</p>
                 : caller.selectedId ? <p>This from number is no longer available for this call. Choose another number.</p>
                 : caller.numbers.every(number => number.unavailableReason === 'DESTINATION_REQUIRED') ? <p>Enter the contact’s international phone number to see matching caller numbers.</p>
                 : <p>No number is available for this destination. Use a number in the contact’s country with remaining call capacity.</p>}
