@@ -215,13 +215,14 @@ export const isDatabaseConfigured = async () => {
 // =============================================
 
 export const vapiApi = {
+    getCallerNumbers: (phoneNumber = '') => apiRequest(`/api/telephony/caller-numbers?${new URLSearchParams({ phoneNumber })}`),
     phoneReadiness: (phoneNumbers) => apiRequest('/api/telephony/readiness', { method: 'POST', body: JSON.stringify({ phoneNumbers }) }),
     getStatus: () => apiRequest('/api/voice/status'),
 
-    initiateCall: ({ phoneNumber, customerName, productIdea, companyContext, assistant, assistantId }) =>
+    initiateCall: ({ phoneNumber, customerName, productIdea, companyContext, assistant, assistantId, fromNumberId }) =>
         apiRequest('/api/voice/call', {
             method: 'POST',
-            body: JSON.stringify({ phoneNumber, customerName, productIdea, companyContext, assistant, assistantId }),
+            body: JSON.stringify({ phoneNumber, customerName, productIdea, companyContext, assistant, assistantId, fromNumberId }),
         }),
 
     batchInitiateCalls: ({ phoneNumbers, productIdea, companyContext, delayMs }) =>
@@ -277,10 +278,10 @@ export const vapiApi = {
 
     getUserPhoneNumbers: (userId) => apiRequest(`/api/voice/user/${userId}/phone-numbers`),
 
-    initiateUserCall: (userId, { phoneNumber, customerName, productIdea, companyContext, assistant, assistantId }) =>
+    initiateUserCall: (userId, { phoneNumber, customerName, productIdea, companyContext, assistant, assistantId, fromNumberId }) =>
         apiRequest(`/api/voice/user/${userId}/call`, {
             method: 'POST',
-            body: JSON.stringify({ phoneNumber, customerName, productIdea, companyContext, assistant, assistantId }),
+            body: JSON.stringify({ phoneNumber, customerName, productIdea, companyContext, assistant, assistantId, fromNumberId }),
         }),
 
     batchInitiateUserCalls: (userId, { phoneNumbers, productIdea, companyContext, delayMs }) =>
@@ -324,7 +325,7 @@ export const stripeApi = {
 
 export const scheduledApi = {
     // Schedule a single call
-    scheduleCall: ({ userId, leadId, phoneNumber, customerName, scheduledAt, productIdea, companyContext, assistantId, maxRetries }) =>
+    scheduleCall: ({ userId, leadId, phoneNumber, customerName, scheduledAt, productIdea, companyContext, assistantId, fromNumberId, maxRetries }) =>
         apiRequest('/api/scheduled/calls', {
             method: 'POST',
             body: JSON.stringify({
@@ -336,6 +337,7 @@ export const scheduledApi = {
                 productIdea,
                 companyContext,
                 assistantId,
+                fromNumberId,
                 maxRetries,
             }),
         }),

@@ -1,3 +1,5 @@
+import CallerNumberSelect from './CallerNumberSelect';
+import { createPortal } from 'react-dom';
 import AIGenerator from '@/components/AIGenerator';
 import { Phone, Mail, X, PhoneCall, Calendar, Clock, Bot, Volume2, Sparkles, Loader2, MapPinned, MapPin, Globe, ExternalLink, Building2, Tag, Star, MessageSquare, Wand2, RefreshCw, Send, Pencil } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -7,12 +9,12 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { emailApi, dataApi } from '@/services/api';
 
-export default function LeadDetailsPanel({ panelType, testCallMode, selectedLead, closePanel, isCalling, isSendingEmail, isSavingEdit, callStatus, testPhoneNumber, setTestPhoneNumber, setIsScheduleMode, isScheduleMode, scheduledDateTime, setScheduledDateTime, selectedAssistantId, setSelectedAssistantId, loadingAssistants, assistants, selectedAssistant, testCallStatus, preTestPhoneNumber, setPreTestPhoneNumber, isTestCalling, handlePreTestCall, editName, setEditName, editPhone, setEditPhone, editEmail, setEditEmail, editCategory, setEditCategory, editCity, setEditCity, editAddress, setEditAddress, editWebsite, setEditWebsite, editStatus, setEditStatus, emailStatus, productIdea, setProductIdea, companyContext, setCompanyContext, setEmailStatus, setIsGeneratingEmail, user, setEmailSubject, setEmailBody, isGeneratingEmail, emailSubject, emailBody, handleInitiateCall, setIsSendingEmail, setSuccess, loadLeads, setIsSavingEdit, setError }) {
-  return (<div className="fixed right-0 top-0 h-full w-full sm:w-[420px] z-40 bg-card border-l border-border shadow-2xl animate-slide-in-right overflow-hidden flex flex-col">
+export default function LeadDetailsPanel({ caller, testCaller, panelType, testCallMode, selectedLead, closePanel, isCalling, isSendingEmail, isSavingEdit, callStatus, testPhoneNumber, setTestPhoneNumber, setIsScheduleMode, isScheduleMode, scheduledDateTime, setScheduledDateTime, selectedAssistantId, setSelectedAssistantId, loadingAssistants, assistants, selectedAssistant, testCallStatus, preTestPhoneNumber, setPreTestPhoneNumber, isTestCalling, handlePreTestCall, editName, setEditName, editPhone, setEditPhone, editEmail, setEditEmail, editCategory, setEditCategory, editCity, setEditCity, editAddress, setEditAddress, editWebsite, setEditWebsite, editStatus, setEditStatus, emailStatus, productIdea, setProductIdea, companyContext, setCompanyContext, setEmailStatus, setIsGeneratingEmail, user, setEmailSubject, setEmailBody, isGeneratingEmail, emailSubject, emailBody, handleInitiateCall, setIsSendingEmail, setSuccess, loadLeads, setIsSavingEdit, setError }) {
+  return createPortal(<div className="fixed right-0 top-0 h-dvh w-full sm:w-[420px] z-[60] bg-card border-l border-border shadow-2xl animate-slide-in-right overflow-hidden flex flex-col" role="dialog" aria-labelledby="contact-panel-title">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
               <div>
-                <h2 className="text-xl font-semibold">
+                <h2 id="contact-panel-title" className="text-xl font-semibold">
                   {panelType === 'call' && (testCallMode ? '🧪 Test Call' : `Call ${selectedLead.name}`)}
                   {panelType === 'email' && `Email ${selectedLead.name}`}
                   {panelType === 'edit' && `Edit ${selectedLead.name}`}
@@ -35,9 +37,10 @@ export default function LeadDetailsPanel({ panelType, testCallMode, selectedLead
                 )}
               </div>
               <button
+                aria-label="Close contact panel"
                 onClick={closePanel}
                 className="p-2 hover:bg-secondary rounded-lg transition-colors"
-                disabled={isCalling || isSendingEmail || isSavingEdit}
+                disabled={isCalling || isTestCalling || isSendingEmail || isSavingEdit}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -73,6 +76,8 @@ export default function LeadDetailsPanel({ panelType, testCallMode, selectedLead
                     </FormGroup>
                   )}
 
+                  <CallerNumberSelect caller={caller} id="contact-from-number" disabled={isCalling || isTestCalling} />
+
                   {/* Call Now vs Schedule Toggle */}
                   <div className="flex gap-2 p-1 bg-muted rounded-lg">
                     <button
@@ -105,6 +110,8 @@ export default function LeadDetailsPanel({ panelType, testCallMode, selectedLead
                     </button>
                   </div>
 
+                  {isScheduleMode && !caller.loading && !caller.schedulingEnabled && <p className="text-sm text-muted-foreground">Scheduled calling is currently paused.</p>}
+
                   {/* Schedule Date/Time Picker */}
                   {isScheduleMode && (
                     <FormGroup label="Schedule Date & Time">
@@ -130,12 +137,13 @@ export default function LeadDetailsPanel({ panelType, testCallMode, selectedLead
                     <div className="relative">
                       <Bot className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Select
+                        aria-label="AI Assistant"
                         value={selectedAssistantId}
                         onChange={(e) => setSelectedAssistantId(e.target.value)}
                         className="pl-10"
-                        disabled={loadingAssistants}
+                        disabled={loadingAssistants || isCalling || isTestCalling}
                       >
-                        <option value="default">📝 Custom (enter product details below)</option>
+                        <option value="default" disabled>Choose an AI assistant</option>
                         {loadingAssistants && (
                           <option disabled>Loading assistants...</option>
                         )}
@@ -217,11 +225,13 @@ export default function LeadDetailsPanel({ panelType, testCallMode, selectedLead
                         </p>
                       </div>
 
+                      {preTestPhoneNumber.trim() && <CallerNumberSelect caller={testCaller} id="test-from-number" disabled={isCalling || isTestCalling} />}
+
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={handlePreTestCall}
-                        disabled={isTestCalling || isCalling || !preTestPhoneNumber.trim()}
+                        disabled={isTestCalling || isCalling || !preTestPhoneNumber.trim() || !testCaller.canCall || selectedAssistantId === 'default'}
                         className="w-full"
                       >
                         {isTestCalling ? (
@@ -604,7 +614,7 @@ export default function LeadDetailsPanel({ panelType, testCallMode, selectedLead
               <Button
                 variant="outline"
                 onClick={closePanel}
-                disabled={isCalling || isSendingEmail || isSavingEdit}
+                disabled={isCalling || isTestCalling || isSendingEmail || isSavingEdit}
                 className="flex-1"
               >
                 {panelType === 'location' ? 'Close' : 'Cancel'}
@@ -614,7 +624,8 @@ export default function LeadDetailsPanel({ panelType, testCallMode, selectedLead
                   variant="gradient"
                   onClick={handleInitiateCall}
                   disabled={
-                    isCalling ||
+                    isCalling || isTestCalling || !caller.canCall || selectedAssistantId === 'default' ||
+                    (isScheduleMode && !caller.schedulingEnabled) ||
                     (testCallMode && !testPhoneNumber.trim()) ||
                     (isScheduleMode && !scheduledDateTime)
                   }
@@ -737,5 +748,5 @@ export default function LeadDetailsPanel({ panelType, testCallMode, selectedLead
                 </Button>
               )}
             </div>
-          </div>);
+          </div>, document.body);
 }

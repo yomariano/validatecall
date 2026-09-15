@@ -2,6 +2,7 @@ import LeadImportForm from '@/components/leads/LeadImportForm';
 import LeadResultsTable from '@/components/leads/LeadResultsTable';
 import LeadDetailsPanel from '@/components/leads/LeadDetailsPanel';
 import { useState, useEffect, useRef, useMemo } from "react";
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { scrapeAndWait } from '../services/leads';
 import { saveLeads, getLeads, getLeadsStats } from '../services/database';
@@ -9,6 +10,7 @@ import { vapiApi, scheduledApi, claudeApi, dataApi } from '../services/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useUsage } from '@/hooks/useUsage';
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { useCallerNumbers } from '@/hooks/useCallerNumbers';
 import PaywallModal from '../components/PaywallModal';
 import HardPaywall from '../components/HardPaywall';
 import { LeadEvents, AgentEvents, ErrorEvents, NavigationEvents } from '@/lib/analytics';
@@ -131,6 +133,10 @@ function Leads() {
   const [preTestPhoneNumber, setPreTestPhoneNumber] = useState('');
   const [isTestCalling, setIsTestCalling] = useState(false);
   const [testCallStatus, setTestCallStatus] = useState('');
+  const [callPanelVersion, setCallPanelVersion] = useState(0);
+  const callPanelActive = panelOpen && panelType === 'call';
+  const caller = useCallerNumbers(callPanelActive, testCallMode ? testPhoneNumber : selectedLead?.phone, `${selectedLead?.id || 'test'}:${callPanelVersion}`);
+  const testCaller = useCallerNumbers(callPanelActive && !testCallMode && !!preTestPhoneNumber.trim(), preTestPhoneNumber, `${selectedLead?.id || 'pre-test'}:${callPanelVersion}`);
 
   // Classification state
   const [isClassifying, setIsClassifying] = useState(false);
@@ -664,6 +670,7 @@ function Leads() {
 
   // Open side panel for different actions
   const openPanel = (type, lead = null) => {
+    setCallPanelVersion(version => version + 1);
     setTestCallMode(type === 'test-call');
     setTestPhoneNumber('');
     setPreTestPhoneNumber('');
@@ -695,7 +702,7 @@ function Leads() {
 
   // Close side panel
   const closePanel = () => {
-    if (!isCalling && !isSendingEmail && !isSavingEdit) {
+    if (!isCalling && !isTestCalling && !isSendingEmail && !isSavingEdit) {
       setPanelOpen(false);
       setPanelType(null);
       setSelectedLead(null);
@@ -717,6 +724,10 @@ function Leads() {
     // Validate phone number
     if (!phoneNumber) {
       setCallStatus('Error: Phone number is required');
+      return;
+    }
+    if (!caller.canCall || (isScheduleMode && !caller.schedulingEnabled)) {
+      setCallStatus('Error: Choose an available from number and ensure calling is enabled.');
       return;
     }
 
@@ -750,6 +761,7 @@ function Leads() {
           userId: user?.id,
           leadId: testCallMode ? null : selectedLead?.id,
           phoneNumber,
+          fromNumberId: caller.selectedId,
           customerName: testCallMode ? 'Test Call' : (selectedLead?.name || 'Prospect'),
           scheduledAt: new Date(scheduledDateTime).toISOString(),
           assistantId: selectedAssistantId !== 'default' ? selectedAssistantId : undefined,
@@ -776,6 +788,7 @@ function Leads() {
       // Handle immediate call
       const callPayload = {
         phoneNumber,
+        fromNumberId: caller.selectedId,
         customerName: testCallMode ? 'Test Call' : (selectedLead?.name || 'Prospect'),
       };
 
@@ -818,6 +831,10 @@ function Leads() {
       setTestCallStatus('Error: Please enter a phone number');
       return;
     }
+    if (!testCaller.canCall) {
+      setTestCallStatus('Error: Choose an available from number for the test call.');
+      return;
+    }
 
     setIsTestCalling(true);
     setTestCallStatus('Initiating test call...');
@@ -827,6 +844,7 @@ function Leads() {
     try {
       const callPayload = {
         phoneNumber,
+        fromNumberId: testCaller.selectedId,
         customerName: 'Test Call',
       };
 
@@ -971,15 +989,15 @@ function Leads() {
         <LeadResultsTable {...{ leads, setFilter, filter, categoryFilter, setCategoryFilter, categories, handleClassifyAll, isClassifying, allLeads, classifyProgress, locationFilter, searchName, searchPhone, searchEmail, searchCity, searchIndustry, searchRatingMin, searchStatus, setLocationFilter, setSearchName, setSearchPhone, setSearchEmail, setSearchCity, setSearchIndustry, setSearchRatingMin, setSearchStatus, selectedLeads, startCampaignWithSelected, toggleSelectAll, toggleSelectLead, getStatusBadge, openPanel }} />
 
         {/* Side Panel Overlay (mobile) */}
-        {panelOpen && (
+        {panelOpen && createPortal(
           <div
-            className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+            className="fixed inset-0 z-50 bg-black/50 lg:hidden"
             onClick={closePanel}
-          />
+          />, document.body
         )}
         {/* Side Panel */}
         {panelOpen && selectedLead && (
-          <LeadDetailsPanel {...{ panelType, testCallMode, selectedLead, closePanel, isCalling, isSendingEmail, isSavingEdit, callStatus, testPhoneNumber, setTestPhoneNumber, setIsScheduleMode, isScheduleMode, scheduledDateTime, setScheduledDateTime, selectedAssistantId, setSelectedAssistantId, loadingAssistants, assistants, selectedAssistant, testCallStatus, preTestPhoneNumber, setPreTestPhoneNumber, isTestCalling, handlePreTestCall, editName, setEditName, editPhone, setEditPhone, editEmail, setEditEmail, editCategory, setEditCategory, editCity, setEditCity, editAddress, setEditAddress, editWebsite, setEditWebsite, editStatus, setEditStatus, emailStatus, productIdea, setProductIdea, companyContext, setCompanyContext, setEmailStatus, setIsGeneratingEmail, user, setEmailSubject, setEmailBody, isGeneratingEmail, emailSubject, emailBody, handleInitiateCall, setIsSendingEmail, setSuccess, loadLeads, setIsSavingEdit, setError }} />
+          <LeadDetailsPanel {...{ caller, testCaller, panelType, testCallMode, selectedLead, closePanel, isCalling, isSendingEmail, isSavingEdit, callStatus, testPhoneNumber, setTestPhoneNumber, setIsScheduleMode, isScheduleMode, scheduledDateTime, setScheduledDateTime, selectedAssistantId, setSelectedAssistantId, loadingAssistants, assistants, selectedAssistant, testCallStatus, preTestPhoneNumber, setPreTestPhoneNumber, isTestCalling, handlePreTestCall, editName, setEditName, editPhone, setEditPhone, editEmail, setEditEmail, editCategory, setEditCategory, editCity, setEditCity, editAddress, setEditAddress, editWebsite, setEditWebsite, editStatus, setEditStatus, emailStatus, productIdea, setProductIdea, companyContext, setCompanyContext, setEmailStatus, setIsGeneratingEmail, user, setEmailSubject, setEmailBody, isGeneratingEmail, emailSubject, emailBody, handleInitiateCall, setIsSendingEmail, setSuccess, loadLeads, setIsSavingEdit, setError }} />
         )}
       </div>
     </div>
